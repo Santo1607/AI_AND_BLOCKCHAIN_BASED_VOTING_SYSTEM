@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { verificationSchema, type VerificationData, type Election, type Candidate } from "@shared/schema";
 import { EnhancedBiometricVerification } from "./enhanced-biometric-verification";
+import { votingBlockchain } from "@/lib/blockchain";
 import { Vote, IdCard, Calendar, ArrowLeft, CheckCircle, AlertCircle, User } from "lucide-react";
 
 interface VotingFormProps {
@@ -137,10 +138,24 @@ export function VotingForm({ onBack }: VotingFormProps) {
     
     setIsVoting(true);
     try {
+      // Step 1: Cast vote on blockchain for integrity
+      const blockchainResult = await votingBlockchain.castVoteOnChain(
+        voterData.aadharNumber,
+        activeElection.id,
+        selectedCandidate
+      );
+
+      if (!blockchainResult.success) {
+        throw new Error(blockchainResult.error || "Blockchain verification failed");
+      }
+
+      // Step 2: Record vote in database with blockchain proof
       const response = await apiRequest("POST", "/api/vote", {
         electionId: activeElection.id,
         candidateId: selectedCandidate,
-        voterAadhar: voterData.aadharNumber
+        voterAadhar: voterData.aadharNumber,
+        blockchainHash: blockchainResult.voteHash,
+        transactionHash: blockchainResult.transactionHash
       });
       
       const result = await response.json();
@@ -149,7 +164,7 @@ export function VotingForm({ onBack }: VotingFormProps) {
         setStep("success");
         toast({
           title: "Vote Cast Successfully",
-          description: "Your vote has been recorded securely.",
+          description: `Your vote has been recorded securely with blockchain verification. Transaction: ${blockchainResult.transactionHash?.substring(0, 10)}...`,
         });
       } else {
         throw new Error(result.message);

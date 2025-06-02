@@ -365,10 +365,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Voting
+  // Voting with blockchain integration
   app.post("/api/vote", async (req, res) => {
     try {
-      const voteData = voteSchema.parse(req.body);
+      const voteData = {
+        ...req.body,
+        blockchainHash: req.body.blockchainHash || null,
+        transactionHash: req.body.transactionHash || null
+      };
       
       // Check if voter is eligible
       const citizen = await storage.getCitizenByAadhar(voteData.voterAadhar);
@@ -387,7 +391,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ success: false, message: "You have already voted in this election" });
       }
 
-      const vote = await storage.castVote(voteData);
+      // Validate blockchain proof if provided
+      if (voteData.blockchainHash && !voteData.transactionHash) {
+        return res.status(400).json({ success: false, message: "Blockchain verification incomplete" });
+      }
+
+      const vote = await storage.castVote({
+        electionId: voteData.electionId,
+        candidateId: voteData.candidateId,
+        voterAadhar: voteData.voterAadhar,
+        blockchainHash: voteData.blockchainHash,
+        transactionHash: voteData.transactionHash
+      });
       res.json({ success: true, message: "Vote cast successfully", voteId: vote.id });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
