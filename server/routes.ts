@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { loginSchema, insertCitizenSchema, verificationSchema } from "@shared/schema";
@@ -29,8 +30,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (admin && admin.password === loginData.password && admin.isActive) {
         // In a real app, you'd use proper session management/JWT
-        req.session = req.session || {};
-        (req.session as any).adminId = admin.id;
+        (req as any).session = (req as any).session || {};
+        (req as any).session.adminId = admin.id;
         
         res.json({
           success: true,
@@ -49,12 +50,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/admin/logout", (req, res) => {
-    req.session = null;
+    (req as any).session = null;
     res.json({ success: true });
   });
 
   app.get("/api/admin/me", async (req, res) => {
-    const adminId = (req.session as any)?.adminId;
+    const adminId = (req as any).session?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -73,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Citizens CRUD operations
   app.get("/api/citizens", async (req, res) => {
-    const adminId = (req.session as any)?.adminId;
+    const adminId = (req as any).session?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -92,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/citizens/:id", async (req, res) => {
-    const adminId = (req.session as any)?.adminId;
+    const adminId = (req as any).session?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -112,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/citizens", upload.single('photo'), async (req, res) => {
-    const adminId = (req.session as any)?.adminId;
+    const adminId = (req as any).session?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -133,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/citizens/:id", upload.single('photo'), async (req, res) => {
-    const adminId = (req.session as any)?.adminId;
+    const adminId = (req as any).session?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -160,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/citizens/:id", async (req, res) => {
-    const adminId = (req.session as any)?.adminId;
+    const adminId = (req as any).session?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -217,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Dashboard statistics
   app.get("/api/stats", async (req, res) => {
-    const adminId = (req.session as any)?.adminId;
+    const adminId = (req as any).session?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -239,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Serve uploaded files
-  app.use('/uploads', require('express').static('uploads'));
+  app.use('/uploads', express.static('uploads'));
 
   const httpServer = createServer(app);
   return httpServer;

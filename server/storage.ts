@@ -129,8 +129,15 @@ export class MemStorage implements IStorage {
     const id = this.citizenIdCounter++;
     const now = new Date().toISOString();
     const citizen: Citizen = { 
-      ...insertCitizen, 
       id,
+      name: insertCitizen.name,
+      aadharNumber: insertCitizen.aadharNumber,
+      dateOfBirth: insertCitizen.dateOfBirth,
+      gender: insertCitizen.gender,
+      address: insertCitizen.address,
+      district: insertCitizen.district,
+      pincode: insertCitizen.pincode,
+      photoUrl: insertCitizen.photoUrl || null,
       status: "active",
       createdAt: now,
       updatedAt: now
