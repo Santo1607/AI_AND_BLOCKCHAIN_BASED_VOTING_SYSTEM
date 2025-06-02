@@ -34,21 +34,33 @@ export function BiometricVerification({
     setVerificationStatus("verifying");
     
     try {
-      // Simplified verification - just checking if a face is present
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simulate more realistic verification with random chance
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Basic verification - if we have both photos, assume it's a match
-      // Focus on presence of facial features rather than complex matching
       const hasStoredPhoto = !!(citizenPhoto || storedPhotoUrl);
       const hasCapturedPhoto = !!capturedImage;
       
-      // Simple scoring based on photo availability
-      let mockScore = 60; // Base score
-      if (hasStoredPhoto && hasCapturedPhoto) {
-        mockScore = 85; // Good match if both photos exist
+      if (!hasStoredPhoto || !hasCapturedPhoto) {
+        setSimilarityScore(45);
+        setVerificationStatus("failed");
+        setTimeout(() => onVerificationComplete(false), 2000);
+        return;
       }
       
-      const threshold = 70; // Lower threshold for simpler verification
+      // Simulate realistic facial verification with some randomness
+      // 70% chance of success on first try, simulating real-world accuracy
+      const verificationAttempt = Math.random();
+      let mockScore;
+      
+      if (verificationAttempt < 0.7) {
+        // Successful verification
+        mockScore = 75 + Math.random() * 20; // 75-95%
+      } else {
+        // Failed verification
+        mockScore = 45 + Math.random() * 25; // 45-70%
+      }
+      
+      const threshold = 75; // Realistic threshold
       const isVerified = mockScore >= threshold;
       
       setSimilarityScore(mockScore);
@@ -57,7 +69,7 @@ export function BiometricVerification({
       // Auto-proceed after showing result
       setTimeout(() => {
         onVerificationComplete(isVerified);
-      }, 2000);
+      }, 2500);
       
     } catch (error) {
       setVerificationStatus("failed");
