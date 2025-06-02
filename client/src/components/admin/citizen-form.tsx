@@ -109,6 +109,9 @@ export function CitizenForm({ onSuccess }: CitizenFormProps) {
       setPhotoFile(null);
       setCapturedPhoto(null);
       setShowCamera(false);
+      setFingerprintData(null);
+      setShowFingerprintScanner(false);
+      setScanningProgress(0);
       onSuccess?.();
     } catch (error: any) {
       toast({
