@@ -92,6 +92,7 @@ export class DatabaseStorage implements IStorage {
           gender: "male",
           address: "123 Main Street, Andheri West",
           district: "Mumbai",
+          constituency: "Chennai Central",
           pincode: "400058"
         });
 
@@ -102,6 +103,7 @@ export class DatabaseStorage implements IStorage {
           gender: "female",
           address: "456 Central Avenue, Karol Bagh",
           district: "Delhi",
+          constituency: "Madurai",
           pincode: "110005"
         });
       }
@@ -123,6 +125,7 @@ export class DatabaseStorage implements IStorage {
           electionId: election.id,
           name: "Dr. Amit Singh",
           party: "National Development Party",
+          constituency: "Chennai Central",
           symbol: "lotus",
           manifesto: "Economic growth, healthcare reform, and education enhancement"
         });
@@ -131,6 +134,7 @@ export class DatabaseStorage implements IStorage {
           electionId: election.id,
           name: "Ms. Kavitha Nair",
           party: "Progressive Alliance",
+          constituency: "Madurai",
           symbol: "hand",
           manifesto: "Social justice, environmental protection, and rural development"
         });
@@ -139,6 +143,7 @@ export class DatabaseStorage implements IStorage {
           electionId: election.id,
           name: "Shri Ravi Patel",
           party: "Common Man's Party",
+          constituency: "Coimbatore",
           symbol: "broom",
           manifesto: "Anti-corruption, transparency, and citizen empowerment"
         });

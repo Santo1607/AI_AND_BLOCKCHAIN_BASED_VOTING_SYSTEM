@@ -328,17 +328,19 @@ export function CandidateManagement() {
                   Add Candidate
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingCandidate ? 'Edit Candidate' : 'Add New Candidate'}
                   </DialogTitle>
                 </DialogHeader>
-                <CandidateForm
-                  candidate={editingCandidate || undefined}
-                  onSuccess={handleDialogClose}
-                  onCancel={handleDialogClose}
-                />
+                <div className="max-h-[calc(90vh-8rem)] overflow-y-auto pr-2">
+                  <CandidateForm
+                    candidate={editingCandidate || undefined}
+                    onSuccess={handleDialogClose}
+                    onCancel={handleDialogClose}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
