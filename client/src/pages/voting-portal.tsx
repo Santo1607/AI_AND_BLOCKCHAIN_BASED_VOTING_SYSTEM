@@ -170,7 +170,7 @@ export default function VotingPortal() {
         </div>
 
         {/* Voting Options */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <Card 
             className="shadow-xl border-0 cursor-pointer hover:shadow-2xl transition-shadow duration-300"
             onClick={() => handleSectionSelect("register")}
@@ -234,27 +234,7 @@ export default function VotingPortal() {
             </CardContent>
           </Card>
 
-          <Card 
-            className="shadow-xl border-0 cursor-pointer hover:shadow-2xl transition-shadow duration-300"
-            onClick={() => handleSectionSelect("results")}
-          >
-            <CardHeader className="text-center pb-4">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-8 h-8 text-orange-600" />
-              </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Election Results</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-gray-600 mb-6">
-                View real-time election results and statistics. Transparent reporting 
-                with detailed vote counts and constituency-wise data.
-              </p>
-              <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
-                View Results
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
+
         </div>
 
         {/* Information Cards */}
