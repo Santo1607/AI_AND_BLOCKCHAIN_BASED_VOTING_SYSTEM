@@ -1,6 +1,13 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
+
+// Extend session type to include adminId
+declare module "express-session" {
+  interface SessionData {
+    adminId?: number;
+  }
+}
 import { storage } from "./storage";
 import { 
   loginSchema, 
@@ -37,9 +44,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const admin = await storage.getAdminByUsername(loginData.username);
       
       if (admin && admin.password === loginData.password && admin.isActive) {
-        // In a real app, you'd use proper session management/JWT
-        (req as any).session = (req as any).session || {};
-        (req as any).session.adminId = admin.id;
+        // Store admin ID in session
+        (req.session as any).adminId = admin.id;
         
         res.json({
           success: true,
@@ -58,12 +64,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/admin/logout", (req, res) => {
-    (req as any).session = null;
-    res.json({ success: true });
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: "Could not log out" });
+      }
+      res.json({ success: true });
+    });
   });
 
   app.get("/api/admin/me", async (req, res) => {
-    const adminId = (req as any).session?.adminId;
+    const adminId = (req.session as any)?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -82,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Citizens CRUD operations
   app.get("/api/citizens", async (req, res) => {
-    const adminId = (req as any).session?.adminId;
+    const adminId = (req.session as any)?.adminId;
     if (!adminId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
