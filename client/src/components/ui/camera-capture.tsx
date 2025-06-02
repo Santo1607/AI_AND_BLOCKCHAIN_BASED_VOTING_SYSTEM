@@ -57,13 +57,13 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
           setError("Video playback error");
         };
         
-        // Fallback: Set streaming after a short delay
+        // Force video display immediately
         setTimeout(() => {
-          if (video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-            console.log("Fallback: Setting streaming to true");
-            setIsStreaming(true);
-          }
-        }, 1000);
+          console.log("Force updating video display");
+          video.load();
+          video.play();
+          setIsStreaming(true);
+        }, 500);
       }
     } catch (err) {
       console.error("Camera access error:", err);
@@ -143,33 +143,32 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
           </p>
         </div>
 
-        <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-6" style={{ aspectRatio: "4/3" }}>
-          {!isStreaming && !capturedImage && (
+        <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-6" style={{ aspectRatio: "4/3", minHeight: "300px" }}>
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className={`w-full h-full object-cover ${streamRef.current ? 'block' : 'hidden'}`}
+            style={{ transform: 'scaleX(-1)' }}
+          />
+          
+          {capturedImage && (
+            <img
+              src={capturedImage}
+              alt="Captured"
+              className="w-full h-full object-cover absolute inset-0"
+              style={{ transform: 'scaleX(-1)' }}
+            />
+          )}
+
+          {!streamRef.current && !capturedImage && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500">Camera not started</p>
               </div>
             </div>
-          )}
-
-          {isStreaming && (
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              style={{ transform: 'scaleX(-1)' }} // Mirror the video like a selfie camera
-            />
-          )}
-
-          {capturedImage && (
-            <img
-              src={capturedImage}
-              alt="Captured"
-              className="w-full h-full object-cover"
-            />
           )}
 
           {/* Face guide overlay */}

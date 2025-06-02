@@ -103,15 +103,16 @@ export function BiometricVerification({
                 Registered Photo
               </h3>
               <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4" style={{ aspectRatio: "3/4" }}>
-                {citizenPhoto ? (
+                {(citizenPhoto || storedPhotoUrl) ? (
                   <img
-                    src={citizenPhoto}
+                    src={citizenPhoto || storedPhotoUrl || ''}
                     alt="Registered citizen"
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <User className="w-16 h-16 text-gray-400" />
+                    <p className="text-gray-500 ml-2">No photo available</p>
                   </div>
                 )}
               </div>
