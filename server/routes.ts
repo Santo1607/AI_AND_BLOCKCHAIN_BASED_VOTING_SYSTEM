@@ -368,6 +368,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Voting with blockchain integration
   app.post("/api/vote", async (req, res) => {
     try {
+      // Check voting hours (8 AM - 5 PM)
+      const currentHour = new Date().getHours();
+      if (currentHour < 8 || currentHour >= 17) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Voting is only allowed between 8:00 AM and 5:00 PM. Please come back during voting hours.",
+          votingHours: "8:00 AM - 5:00 PM"
+        });
+      }
+
       const voteData = {
         ...req.body,
         blockchainHash: req.body.blockchainHash || null,
@@ -508,9 +518,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Election results
+  // Election results (Admin only, after 6 PM)
   app.get("/api/elections/:electionId/results", async (req, res) => {
     try {
+      // Check if user is admin
+      const adminId = (req as any).session?.adminId;
+      if (!adminId) {
+        return res.status(401).json({ message: "Admin authentication required to view results" });
+      }
+
+      // Check if results can be viewed (after 6 PM)
+      const currentHour = new Date().getHours();
+      if (currentHour < 18) {
+        return res.status(403).json({ 
+          message: "Election results are only available after 6:00 PM",
+          availableAt: "6:00 PM"
+        });
+      }
+
       const electionId = parseInt(req.params.electionId);
       const results = await storage.getElectionResults(electionId);
       res.json(results);

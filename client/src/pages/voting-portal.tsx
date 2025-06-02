@@ -1,20 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { VoterRegistrationForm } from "@/components/voting/voter-registration-form";
 import { VotingForm } from "@/components/voting/voting-form";
 import { ElectionResults } from "@/components/voting/election-results";
 import { BiometricVerification } from "@/components/voting/biometric-verification";
-import { Vote, Users, TrendingUp, ArrowRight } from "lucide-react";
+import { Vote, Users, TrendingUp, ArrowRight, Clock, AlertCircle } from "lucide-react";
 
 type VotingSection = "register" | "vote" | "results";
 
 export default function VotingPortal() {
   const [, setLocation] = useLocation();
   const [currentSection, setCurrentSection] = useState<VotingSection | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [votingStatus, setVotingStatus] = useState({
+    isVotingTime: false,
+    canViewResults: false,
+    message: ""
+  });
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now);
+      
+      const currentHour = now.getHours();
+      const isVotingTime = currentHour >= 8 && currentHour < 17;
+      const canViewResults = currentHour >= 18;
+      
+      let message = "";
+      if (currentHour < 8) {
+        message = "Voting will start at 8:00 AM. Please come back during voting hours.";
+      } else if (isVotingTime) {
+        message = "Voting is currently active. You can cast your vote now.";
+      } else if (currentHour >= 17 && currentHour < 18) {
+        message = "Voting has ended for today. Results will be available at 6:00 PM.";
+      } else {
+        message = "Voting has ended. Election results are now available.";
+      }
+      
+      setVotingStatus({ isVotingTime, canViewResults, message });
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSectionSelect = (section: VotingSection) => {
+    if (section === "vote" && !votingStatus.isVotingTime) {
+      return; // Prevent voting outside allowed hours
+    }
+    if (section === "results" && !votingStatus.canViewResults) {
+      return; // Prevent viewing results before 6 PM
+    }
     setCurrentSection(section);
   };
 
@@ -84,6 +126,49 @@ export default function VotingPortal() {
           </p>
         </div>
 
+        {/* Voting Schedule & Status */}
+        <div className="mb-8">
+          <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center space-x-3">
+                  <Clock className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Election Schedule</h3>
+                    <p className="text-sm text-gray-600">
+                      Voting: 8:00 AM - 5:00 PM | Results: 6:00 PM onwards
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Current Time</p>
+                    <p className="font-semibold text-gray-900">
+                      {currentTime.toLocaleTimeString('en-IN', { 
+                        hour12: true,
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  <Badge 
+                    variant={votingStatus.isVotingTime ? "default" : "secondary"}
+                    className={votingStatus.isVotingTime ? "bg-green-600" : ""}
+                  >
+                    {votingStatus.isVotingTime ? "Voting Active" : "Voting Closed"}
+                  </Badge>
+                </div>
+              </div>
+              <div className="mt-4 p-4 bg-white rounded-lg border border-blue-100">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <p className="text-sm text-gray-700">{votingStatus.message}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Voting Options */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <Card 
@@ -109,12 +194,24 @@ export default function VotingPortal() {
           </Card>
 
           <Card 
-            className="shadow-xl border-0 cursor-pointer hover:shadow-2xl transition-shadow duration-300"
+            className={`shadow-xl border-0 transition-all duration-300 ${
+              votingStatus.isVotingTime 
+                ? "cursor-pointer hover:shadow-2xl" 
+                : "opacity-60 cursor-not-allowed"
+            }`}
             onClick={() => handleSectionSelect("vote")}
           >
             <CardHeader className="text-center pb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Vote className="w-8 h-8 text-green-600" />
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                votingStatus.isVotingTime 
+                  ? "bg-green-100" 
+                  : "bg-gray-100"
+              }`}>
+                <Vote className={`w-8 h-8 ${
+                  votingStatus.isVotingTime 
+                    ? "text-green-600" 
+                    : "text-gray-400"
+                }`} />
               </div>
               <CardTitle className="text-2xl font-bold text-gray-900">Cast Your Vote</CardTitle>
             </CardHeader>
@@ -123,8 +220,15 @@ export default function VotingPortal() {
                 Vote securely in active elections. Your vote is encrypted and anonymous, 
                 ensuring complete privacy and transparency.
               </p>
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-                Vote Now
+              <Button 
+                className={`w-full ${
+                  votingStatus.isVotingTime 
+                    ? "bg-green-600 hover:bg-green-700 text-white" 
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+                disabled={!votingStatus.isVotingTime}
+              >
+                {votingStatus.isVotingTime ? "Vote Now" : "Voting Closed"}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
