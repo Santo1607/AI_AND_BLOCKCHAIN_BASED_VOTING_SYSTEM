@@ -272,6 +272,37 @@ export function CitizenForm({ onSuccess }: CitizenFormProps) {
                 
                 <FormField
                   control={form.control}
+                  name="constituency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Constituency *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="input-focus">
+                            <SelectValue placeholder="Select constituency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Central Delhi">Central Delhi</SelectItem>
+                          <SelectItem value="East Delhi">East Delhi</SelectItem>
+                          <SelectItem value="North Delhi">North Delhi</SelectItem>
+                          <SelectItem value="South Delhi">South Delhi</SelectItem>
+                          <SelectItem value="West Delhi">West Delhi</SelectItem>
+                          <SelectItem value="Mumbai North">Mumbai North</SelectItem>
+                          <SelectItem value="Mumbai South">Mumbai South</SelectItem>
+                          <SelectItem value="Mumbai Central">Mumbai Central</SelectItem>
+                          <SelectItem value="Bangalore North">Bangalore North</SelectItem>
+                          <SelectItem value="Bangalore South">Bangalore South</SelectItem>
+                          <SelectItem value="Bangalore Central">Bangalore Central</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
                   name="pincode"
                   render={({ field }) => (
                     <FormItem>

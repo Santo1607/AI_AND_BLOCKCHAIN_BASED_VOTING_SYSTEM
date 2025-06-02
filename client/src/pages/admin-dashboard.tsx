@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/admin/sidebar";
 import { DashboardStats } from "@/components/admin/dashboard-stats";
 import { CitizensTable } from "@/components/admin/citizens-table";
 import { CitizenForm } from "@/components/admin/citizen-form";
+import { CandidateManagement } from "@/components/admin/candidate-management";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +12,7 @@ import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Shield, LogOut, FileBarChart, Download, Calendar } from "lucide-react";
 
-type AdminSection = "overview" | "citizens" | "add-citizen" | "reports";
+type AdminSection = "overview" | "citizens" | "add-citizen" | "candidates" | "reports";
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -162,6 +163,17 @@ export default function AdminDashboard() {
               <p className="text-gray-600">Register a new citizen with complete details</p>
             </div>
             <CitizenForm onSuccess={() => setCurrentSection("citizens")} />
+          </div>
+        );
+      
+      case "candidates":
+        return (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Candidate Management</h2>
+              <p className="text-gray-600">Manage election candidates by constituency</p>
+            </div>
+            <CandidateManagement />
           </div>
         );
       

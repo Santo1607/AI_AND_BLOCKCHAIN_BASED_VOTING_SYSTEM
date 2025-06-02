@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Users, UserPlus, FileText } from "lucide-react";
+import { BarChart3, Users, UserPlus, FileText, Vote } from "lucide-react";
 
-type AdminSection = "overview" | "citizens" | "add-citizen" | "reports";
+type AdminSection = "overview" | "citizens" | "add-citizen" | "candidates" | "reports";
 
 interface SidebarProps {
   currentSection: AdminSection;
@@ -28,6 +28,12 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
       label: "Add New Citizen",
       icon: UserPlus,
       description: "Register new citizen"
+    },
+    {
+      id: "candidates" as AdminSection,
+      label: "Candidates",
+      icon: Vote,
+      description: "Manage candidates"
     },
     {
       id: "reports" as AdminSection,
