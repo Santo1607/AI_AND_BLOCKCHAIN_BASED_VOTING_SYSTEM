@@ -21,6 +21,8 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
   const startCamera = useCallback(async () => {
     try {
       setError(null);
+      console.log("Starting camera...");
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 640 },
@@ -29,29 +31,43 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
         }
       });
       
+      console.log("Camera stream obtained:", stream);
       streamRef.current = stream;
+      
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        const video = videoRef.current;
+        video.srcObject = stream;
         
-        // Wait for video to load and start playing
-        await new Promise((resolve, reject) => {
-          if (!videoRef.current) return reject(new Error("Video element not found"));
-          
-          const video = videoRef.current;
-          video.onloadedmetadata = () => {
-            video.play()
-              .then(() => {
-                setIsStreaming(true);
-                resolve(true);
-              })
-              .catch(reject);
-          };
-          video.onerror = reject;
-        });
+        // Force video to play and update state
+        video.onloadedmetadata = () => {
+          console.log("Video metadata loaded");
+          video.play()
+            .then(() => {
+              console.log("Video started playing");
+              setIsStreaming(true);
+            })
+            .catch((error) => {
+              console.error("Error playing video:", error);
+              setError("Failed to start video playback");
+            });
+        };
+        
+        video.onerror = (error) => {
+          console.error("Video error:", error);
+          setError("Video playback error");
+        };
+        
+        // Fallback: Set streaming after a short delay
+        setTimeout(() => {
+          if (video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+            console.log("Fallback: Setting streaming to true");
+            setIsStreaming(true);
+          }
+        }, 1000);
       }
     } catch (err) {
-      setError("Unable to access camera. Please ensure you have granted camera permissions.");
       console.error("Camera access error:", err);
+      setError("Unable to access camera. Please ensure you have granted camera permissions.");
     }
   }, []);
 
