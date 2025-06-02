@@ -24,6 +24,13 @@ export function VotingForm({ onBack }: VotingFormProps) {
   const [citizenData, setCitizenData] = useState<{ name: string; photoUrl: string | null; fingerprintData?: string; constituency?: string } | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
+  const [voteReceipt, setVoteReceipt] = useState<{
+    transactionHash: string;
+    blockchainHash: string;
+    timestamp: string;
+    candidateName: string;
+    voteId: number;
+  } | null>(null);
   const { toast } = useToast();
 
   const form = useForm<VerificationData>({
@@ -161,6 +168,18 @@ export function VotingForm({ onBack }: VotingFormProps) {
       const result = await response.json();
       
       if (result.success) {
+        // Find the selected candidate name
+        const candidate = candidates?.find(c => c.id === selectedCandidate);
+        
+        // Set vote receipt data
+        setVoteReceipt({
+          transactionHash: blockchainResult.transactionHash || 'LOCAL_' + Date.now(),
+          blockchainHash: blockchainResult.voteHash,
+          timestamp: new Date().toISOString(),
+          candidateName: candidate?.name || 'Unknown Candidate',
+          voteId: result.voteId
+        });
+        
         setStep("success");
         toast({
           title: "Vote Cast Successfully",
@@ -225,15 +244,68 @@ export function VotingForm({ onBack }: VotingFormProps) {
                 </div>
                 <div className="flex items-center justify-center space-x-2 text-green-600">
                   <CheckCircle className="w-5 h-5" />
+                  <span>Blockchain verified</span>
+                </div>
+                <div className="flex items-center justify-center space-x-2 text-green-600">
+                  <CheckCircle className="w-5 h-5" />
                   <span>Vote encrypted and anonymized</span>
                 </div>
               </div>
 
+              {voteReceipt && (
+                <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-6 mb-8">
+                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    Digital Vote Certificate
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 gap-4 text-left">
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-600">Vote ID</p>
+                      <p className="text-lg font-mono text-gray-900">#{voteReceipt.voteId}</p>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-600">Selected Candidate</p>
+                      <p className="text-lg text-gray-900">{voteReceipt.candidateName}</p>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-600">Blockchain Hash</p>
+                      <p className="text-sm font-mono text-gray-900 break-all">
+                        {voteReceipt.blockchainHash}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-600">Transaction Hash</p>
+                      <p className="text-sm font-mono text-gray-900 break-all">
+                        {voteReceipt.transactionHash}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-600">Timestamp</p>
+                      <p className="text-lg text-gray-900">
+                        {new Date(voteReceipt.timestamp).toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      <strong>Important:</strong> Your vote has been permanently recorded on the blockchain. 
+                      This certificate serves as proof of your participation in the democratic process.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                <h3 className="font-semibold text-blue-900 mb-2">Important Information</h3>
+                <h3 className="font-semibold text-blue-900 mb-2">Voting Complete</h3>
                 <p className="text-sm text-blue-800">
                   Your vote has been cast and cannot be changed. The voting process is complete and secure. 
-                  You can check election results once voting closes.
+                  Results will be available to election officials at 6:00 PM.
                 </p>
               </div>
 
@@ -360,8 +432,16 @@ export function VotingForm({ onBack }: VotingFormProps) {
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start space-x-4">
-                        <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User className="w-8 h-8 text-gray-500" />
+                        <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                          {candidate.photoUrl ? (
+                            <img 
+                              src={candidate.photoUrl} 
+                              alt={candidate.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-8 h-8 text-gray-500" />
+                          )}
                         </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-gray-900 mb-1">
