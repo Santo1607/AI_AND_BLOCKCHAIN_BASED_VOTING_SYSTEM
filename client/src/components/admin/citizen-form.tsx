@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { FileUpload } from "@/components/ui/file-upload";
+import { CameraCapture } from "@/components/ui/camera-capture";
 import { useToast } from "@/hooks/use-toast";
 import { useCitizens } from "@/hooks/use-citizens";
 import { insertCitizenSchema, type InsertCitizen } from "@shared/schema";
@@ -20,6 +21,9 @@ interface CitizenFormProps {
 export function CitizenForm({ onSuccess }: CitizenFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [photoMethod, setPhotoMethod] = useState<"upload" | "camera">("camera");
   const { toast } = useToast();
   const { createCitizen } = useCitizens();
 
@@ -44,17 +48,37 @@ export function CitizenForm({ onSuccess }: CitizenFormProps) {
     return `${numbers.slice(0, 4)}-${numbers.slice(4, 8)}-${numbers.slice(8, 12)}`;
   };
 
+  const handleCameraCapture = (imageData: string) => {
+    setCapturedPhoto(imageData);
+    setShowCamera(false);
+  };
+
+  const convertBase64ToFile = (base64: string, filename: string): File => {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
   const onSubmit = async (data: InsertCitizen) => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined) {
-          formData.append(key, value);
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
         }
       });
 
       if (photoFile) {
+        formData.append('photo', photoFile);
+      } else if (capturedPhoto) {
+        const photoFile = convertBase64ToFile(capturedPhoto, `citizen_photo_${Date.now()}.jpg`);
         formData.append('photo', photoFile);
       }
 
@@ -67,6 +91,8 @@ export function CitizenForm({ onSuccess }: CitizenFormProps) {
       
       form.reset();
       setPhotoFile(null);
+      setCapturedPhoto(null);
+      setShowCamera(false);
       onSuccess?.();
     } catch (error: any) {
       toast({

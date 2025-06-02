@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VoterRegistrationForm } from "@/components/voting/voter-registration-form";
 import { VotingForm } from "@/components/voting/voting-form";
 import { ElectionResults } from "@/components/voting/election-results";
+import { BiometricVerification } from "@/components/voting/biometric-verification";
 import { Vote, Users, TrendingUp, ArrowRight } from "lucide-react";
 
 type VotingSection = "register" | "vote" | "results";

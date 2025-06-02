@@ -174,7 +174,7 @@ export function ElectionResults({ onBack }: ElectionResultsProps) {
                   <CardContent>
                     <div className="space-y-6">
                       {results.map((result, index) => (
-                        <div key={result.candidateId} className="border-b border-gray-200 pb-6 last:border-b-0">
+                        <div key={`result-${result.candidateId}-${index}`} className="border-b border-gray-200 pb-6 last:border-b-0">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold ${
