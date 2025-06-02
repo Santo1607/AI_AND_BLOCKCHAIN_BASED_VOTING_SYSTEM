@@ -25,6 +25,44 @@ export const citizens = pgTable("citizens", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const elections = pgTable("elections", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+  status: text("status").notNull().default("upcoming"), // upcoming, active, completed
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const candidates = pgTable("candidates", {
+  id: serial("id").primaryKey(),
+  electionId: integer("election_id").notNull(),
+  name: text("name").notNull(),
+  party: text("party").notNull(),
+  symbol: text("symbol").notNull(),
+  photoUrl: text("photo_url"),
+  manifesto: text("manifesto"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const votes = pgTable("votes", {
+  id: serial("id").primaryKey(),
+  electionId: integer("election_id").notNull(),
+  candidateId: integer("candidate_id").notNull(),
+  voterAadhar: text("voter_aadhar").notNull(),
+  votedAt: text("voted_at").notNull(),
+});
+
+export const voterRegistrations = pgTable("voter_registrations", {
+  id: serial("id").primaryKey(),
+  citizenId: integer("citizen_id").notNull(),
+  voterIdNumber: text("voter_id_number").notNull().unique(),
+  registeredAt: text("registered_at").notNull(),
+  status: text("status").notNull().default("active"),
+});
+
 export const insertAdminSchema = createInsertSchema(admins).omit({
   id: true,
   isActive: true,
@@ -51,9 +89,39 @@ export const verificationSchema = z.object({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
 });
 
+export const insertElectionSchema = createInsertSchema(elections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCandidateSchema = createInsertSchema(candidates).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const voteSchema = z.object({
+  electionId: z.number(),
+  candidateId: z.number(),
+  voterAadhar: z.string().regex(/^\d{4}-\d{4}-\d{4}$/, "Aadhar number must be in XXXX-XXXX-XXXX format"),
+});
+
+export const voterRegistrationSchema = z.object({
+  aadharNumber: z.string().regex(/^\d{4}-\d{4}-\d{4}$/, "Aadhar number must be in XXXX-XXXX-XXXX format"),
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+});
+
 export type Admin = typeof admins.$inferSelect;
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type Citizen = typeof citizens.$inferSelect;
 export type InsertCitizen = z.infer<typeof insertCitizenSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type VerificationData = z.infer<typeof verificationSchema>;
+export type Election = typeof elections.$inferSelect;
+export type InsertElection = z.infer<typeof insertElectionSchema>;
+export type Candidate = typeof candidates.$inferSelect;
+export type InsertCandidate = z.infer<typeof insertCandidateSchema>;
+export type Vote = typeof votes.$inferSelect;
+export type VoteData = z.infer<typeof voteSchema>;
+export type VoterRegistration = typeof voterRegistrations.$inferSelect;
+export type VoterRegistrationData = z.infer<typeof voterRegistrationSchema>;
