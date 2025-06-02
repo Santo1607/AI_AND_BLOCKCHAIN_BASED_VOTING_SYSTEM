@@ -294,6 +294,23 @@ export function CitizenForm({ onSuccess }: CitizenFormProps) {
                           <SelectItem value="Bangalore North">Bangalore North</SelectItem>
                           <SelectItem value="Bangalore South">Bangalore South</SelectItem>
                           <SelectItem value="Bangalore Central">Bangalore Central</SelectItem>
+                          <SelectItem value="Chennai North">Chennai North</SelectItem>
+                          <SelectItem value="Chennai South">Chennai South</SelectItem>
+                          <SelectItem value="Chennai Central">Chennai Central</SelectItem>
+                          <SelectItem value="Coimbatore">Coimbatore</SelectItem>
+                          <SelectItem value="Madurai">Madurai</SelectItem>
+                          <SelectItem value="Salem">Salem</SelectItem>
+                          <SelectItem value="Tiruchirapalli">Tiruchirapalli</SelectItem>
+                          <SelectItem value="Tirunelveli">Tirunelveli</SelectItem>
+                          <SelectItem value="Vellore">Vellore</SelectItem>
+                          <SelectItem value="Erode">Erode</SelectItem>
+                          <SelectItem value="Tiruppur">Tiruppur</SelectItem>
+                          <SelectItem value="Dindigul">Dindigul</SelectItem>
+                          <SelectItem value="Thanjavur">Thanjavur</SelectItem>
+                          <SelectItem value="Cuddalore">Cuddalore</SelectItem>
+                          <SelectItem value="Nagapattinam">Nagapattinam</SelectItem>
+                          <SelectItem value="Mayiladuthurai">Mayiladuthurai</SelectItem>
+                          <SelectItem value="Ariyalur">Ariyalur</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

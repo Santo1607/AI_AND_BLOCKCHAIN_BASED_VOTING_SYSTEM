@@ -21,7 +21,11 @@ import { FileUpload } from '@/components/ui/file-upload';
 const constituencies = [
   'Central Delhi', 'East Delhi', 'North Delhi', 'South Delhi', 'West Delhi',
   'Mumbai North', 'Mumbai South', 'Mumbai Central', 
-  'Bangalore North', 'Bangalore South', 'Bangalore Central'
+  'Bangalore North', 'Bangalore South', 'Bangalore Central',
+  'Chennai North', 'Chennai South', 'Chennai Central',
+  'Coimbatore', 'Madurai', 'Salem', 'Tiruchirapalli', 'Tirunelveli',
+  'Vellore', 'Erode', 'Tiruppur', 'Dindigul', 'Thanjavur',
+  'Cuddalore', 'Nagapattinam', 'Mayiladuthurai', 'Ariyalur'
 ];
 
 interface CandidateFormProps {

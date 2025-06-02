@@ -20,7 +20,7 @@ interface VotingFormProps {
 export function VotingForm({ onBack }: VotingFormProps) {
   const [step, setStep] = useState<"verify" | "biometric" | "vote" | "success">("verify");
   const [voterData, setVoterData] = useState<{ aadharNumber: string; voterIdNumber: string; fingerprintData?: string } | null>(null);
-  const [citizenData, setCitizenData] = useState<{ name: string; photoUrl: string | null; fingerprintData?: string } | null>(null);
+  const [citizenData, setCitizenData] = useState<{ name: string; photoUrl: string | null; fingerprintData?: string; constituency?: string } | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const { toast } = useToast();
@@ -40,8 +40,16 @@ export function VotingForm({ onBack }: VotingFormProps) {
   const activeElection = elections?.find(election => election.status === "active");
 
   const { data: candidates } = useQuery<Candidate[]>({
-    queryKey: ["/api/elections", activeElection?.id, "candidates"],
-    enabled: !!activeElection,
+    queryKey: ["/api/candidates", citizenData?.constituency],
+    queryFn: async () => {
+      const url = citizenData?.constituency 
+        ? `/api/candidates?constituency=${encodeURIComponent(citizenData.constituency)}`
+        : '/api/candidates';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch candidates');
+      return response.json();
+    },
+    enabled: !!citizenData?.constituency,
   });
 
   const formatAadharNumber = (value: string) => {
@@ -85,7 +93,9 @@ export function VotingForm({ onBack }: VotingFormProps) {
         if (verifyResult.success) {
           setCitizenData({
             name: verifyResult.citizen.name,
-            photoUrl: verifyResult.citizen.photoUrl
+            photoUrl: verifyResult.citizen.photoUrl,
+            constituency: verifyResult.citizen.constituency,
+            fingerprintData: verifyResult.citizen.fingerprintData
           });
           setStep("biometric");
         } else {
@@ -301,9 +311,12 @@ export function VotingForm({ onBack }: VotingFormProps) {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">{activeElection?.title}</h2>
             <p className="text-lg text-gray-600">{activeElection?.description}</p>
-            <div className="mt-4">
+            <div className="mt-4 space-x-4">
               <Badge className="bg-green-100 text-green-800">
                 Voter ID: {voterData?.voterIdNumber}
+              </Badge>
+              <Badge className="bg-blue-100 text-blue-800">
+                Constituency: {citizenData?.constituency}
               </Badge>
             </div>
           </div>

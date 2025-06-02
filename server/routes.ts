@@ -218,8 +218,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             gender: citizen.gender,
             address: citizen.address,
             district: citizen.district,
+            constituency: citizen.constituency,
             pincode: citizen.pincode,
             photoUrl: citizen.photoUrl,
+            fingerprintData: citizen.fingerprintData,
             status: citizen.status
           }
         });
