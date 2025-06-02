@@ -456,12 +456,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const candidateData = {
-        ...req.body,
-        electionId: 1, // Current election
-        photoUrl: req.file ? `/uploads/${req.file.filename}` : null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        name: req.body.name,
+        party: req.body.party,
+        constituency: req.body.constituency,
+        symbol: req.body.symbol,
+        manifesto: req.body.manifesto || null,
+        electionId: parseInt(req.body.electionId) || 1,
+        photoUrl: req.file ? `/uploads/${req.file.filename}` : null
       };
+
+      // Validate required fields
+      if (!candidateData.name || !candidateData.party || !candidateData.constituency || !candidateData.symbol) {
+        return res.status(400).json({ message: "Name, party, constituency, and symbol are required" });
+      }
 
       const candidate = await storage.createCandidate(candidateData);
       res.json(candidate);
@@ -478,10 +485,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const candidateId = parseInt(req.params.id);
-      const updateData = {
-        ...req.body,
-        updatedAt: new Date().toISOString()
-      };
+      const updateData: any = {};
+
+      if (req.body.name) updateData.name = req.body.name;
+      if (req.body.party) updateData.party = req.body.party;
+      if (req.body.constituency) updateData.constituency = req.body.constituency;
+      if (req.body.symbol) updateData.symbol = req.body.symbol;
+      if (req.body.manifesto !== undefined) updateData.manifesto = req.body.manifesto || null;
+      if (req.body.electionId) updateData.electionId = parseInt(req.body.electionId);
 
       if (req.file) {
         updateData.photoUrl = `/uploads/${req.file.filename}`;
