@@ -35,14 +35,23 @@ export default function PublicPortal() {
               </div>
             </div>
             
-            <Button 
-              variant="outline"
-              onClick={() => setLocation("/admin")}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50"
-            >
-              Admin Portal
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            <div className="flex space-x-4">
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/voting")}
+                className="text-green-600 border-green-200 hover:bg-green-50"
+              >
+                Voting Portal
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/admin")}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                Admin Portal
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

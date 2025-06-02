@@ -16,6 +16,7 @@ function Router() {
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/public" component={PublicPortal} />
+      <Route path="/voting" component={VotingPortal} />
       <Route component={NotFound} />
     </Switch>
   );
