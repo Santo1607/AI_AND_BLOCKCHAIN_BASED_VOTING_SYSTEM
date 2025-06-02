@@ -18,6 +18,8 @@ import {
   type VoterRegistration,
   type VoterRegistrationData
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Admin methods
@@ -61,347 +63,328 @@ export interface IStorage {
   isEligibleToVote(aadharNumber: string, dateOfBirth: string): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private admins: Map<number, Admin>;
-  private citizens: Map<number, Citizen>;
-  private elections: Map<number, Election>;
-  private candidates: Map<number, Candidate>;
-  private votes: Map<number, Vote>;
-  private voterRegistrations: Map<number, VoterRegistration>;
-  private adminIdCounter: number;
-  private citizenIdCounter: number;
-  private electionIdCounter: number;
-  private candidateIdCounter: number;
-  private voteIdCounter: number;
-  private voterRegistrationIdCounter: number;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.admins = new Map();
-    this.citizens = new Map();
-    this.elections = new Map();
-    this.candidates = new Map();
-    this.votes = new Map();
-    this.voterRegistrations = new Map();
-    this.adminIdCounter = 1;
-    this.citizenIdCounter = 1;
-    this.electionIdCounter = 1;
-    this.candidateIdCounter = 1;
-    this.voteIdCounter = 1;
-    this.voterRegistrationIdCounter = 1;
-
-    // Create default admin user
-    this.createAdmin({
-      username: "admin123",
-      password: "admin@123",
-      name: "System Administrator"
-    });
-
-    // Create some sample citizens for demo
-    this.createCitizen({
-      name: "Rajesh Kumar",
-      aadharNumber: "1234-5678-9012",
-      dateOfBirth: "1985-08-15",
-      gender: "male",
-      address: "123 Main Street, Andheri West",
-      district: "Mumbai",
-      pincode: "400058"
-    });
-
-    this.createCitizen({
-      name: "Priya Sharma",
-      aadharNumber: "9876-5432-1098",
-      dateOfBirth: "1992-03-22",
-      gender: "female",
-      address: "456 Central Avenue, Karol Bagh",
-      district: "Delhi",
-      pincode: "110005"
-    });
-
-    // Initialize sample data after all maps are created
     this.initializeSampleData();
   }
 
   private async initializeSampleData() {
-    // Create sample election
-    const election = await this.createElection({
-      title: "General Election 2024",
-      description: "National Parliamentary Election",
-      startDate: "2024-04-01",
-      endDate: "2024-04-07",
-      status: "active"
-    });
+    try {
+      // Check if admin already exists
+      const existingAdmin = await this.getAdminByUsername("admin123");
+      if (!existingAdmin) {
+        // Create default admin user
+        await this.createAdmin({
+          username: "admin123",
+          password: "admin@123",
+          name: "System Administrator"
+        });
+      }
 
-    // Create candidates for the election
-    await this.createCandidate({
-      electionId: election.id,
-      name: "Dr. Amit Singh",
-      party: "National Development Party",
-      symbol: "lotus",
-      manifesto: "Economic growth, healthcare reform, and education enhancement"
-    });
+      // Check if sample citizens exist
+      const existingCitizen = await this.getCitizenByAadhar("1234-5678-9012");
+      if (!existingCitizen) {
+        // Create sample citizens
+        await this.createCitizen({
+          name: "Rajesh Kumar",
+          aadharNumber: "1234-5678-9012",
+          dateOfBirth: "1985-08-15",
+          gender: "male",
+          address: "123 Main Street, Andheri West",
+          district: "Mumbai",
+          pincode: "400058"
+        });
 
-    await this.createCandidate({
-      electionId: election.id,
-      name: "Ms. Kavitha Nair",
-      party: "Progressive Alliance",
-      symbol: "hand",
-      manifesto: "Social justice, environmental protection, and rural development"
-    });
+        await this.createCitizen({
+          name: "Priya Sharma",
+          aadharNumber: "9876-5432-1098",
+          dateOfBirth: "1992-03-22",
+          gender: "female",
+          address: "456 Central Avenue, Karol Bagh",
+          district: "Delhi",
+          pincode: "110005"
+        });
+      }
 
-    await this.createCandidate({
-      electionId: election.id,
-      name: "Shri Ravi Patel",
-      party: "Common Man's Party",
-      symbol: "broom",
-      manifesto: "Anti-corruption, transparency, and citizen empowerment"
-    });
+      // Check if sample election exists
+      const existingElections = await this.getAllElections();
+      if (existingElections.length === 0) {
+        // Create sample election
+        const election = await this.createElection({
+          title: "General Election 2024",
+          description: "National Parliamentary Election",
+          startDate: "2024-04-01",
+          endDate: "2024-04-07",
+          status: "active"
+        });
 
-    // Register sample voters
-    await this.registerVoter({
-      aadharNumber: "1234-5678-9012",
-      dateOfBirth: "1985-08-15"
-    });
+        // Create candidates for the election
+        await this.createCandidate({
+          electionId: election.id,
+          name: "Dr. Amit Singh",
+          party: "National Development Party",
+          symbol: "lotus",
+          manifesto: "Economic growth, healthcare reform, and education enhancement"
+        });
 
-    await this.registerVoter({
-      aadharNumber: "9876-5432-1098",
-      dateOfBirth: "1992-03-22"
-    });
+        await this.createCandidate({
+          electionId: election.id,
+          name: "Ms. Kavitha Nair",
+          party: "Progressive Alliance",
+          symbol: "hand",
+          manifesto: "Social justice, environmental protection, and rural development"
+        });
+
+        await this.createCandidate({
+          electionId: election.id,
+          name: "Shri Ravi Patel",
+          party: "Common Man's Party",
+          symbol: "broom",
+          manifesto: "Anti-corruption, transparency, and citizen empowerment"
+        });
+
+        // Register sample voters
+        try {
+          await this.registerVoter({
+            aadharNumber: "1234-5678-9012",
+            dateOfBirth: "1985-08-15"
+          });
+
+          await this.registerVoter({
+            aadharNumber: "9876-5432-1098",
+            dateOfBirth: "1992-03-22"
+          });
+        } catch (error) {
+          // Voters might already be registered, ignore error
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing sample data:", error);
+    }
   }
 
   // Admin methods
   async getAdmin(id: number): Promise<Admin | undefined> {
-    return this.admins.get(id);
+    const [admin] = await db.select().from(admins).where(eq(admins.id, id));
+    return admin || undefined;
   }
 
   async getAdminByUsername(username: string): Promise<Admin | undefined> {
-    return Array.from(this.admins.values()).find(
-      (admin) => admin.username === username
-    );
+    const [admin] = await db.select().from(admins).where(eq(admins.username, username));
+    return admin || undefined;
   }
 
   async createAdmin(insertAdmin: InsertAdmin): Promise<Admin> {
-    const id = this.adminIdCounter++;
-    const admin: Admin = { 
-      ...insertAdmin, 
-      id,
-      isActive: true
-    };
-    this.admins.set(id, admin);
+    const [admin] = await db
+      .insert(admins)
+      .values(insertAdmin)
+      .returning();
     return admin;
   }
 
   // Citizen methods
   async getCitizen(id: number): Promise<Citizen | undefined> {
-    return this.citizens.get(id);
+    const [citizen] = await db.select().from(citizens).where(eq(citizens.id, id));
+    return citizen || undefined;
   }
 
   async getCitizenByAadhar(aadharNumber: string): Promise<Citizen | undefined> {
-    return Array.from(this.citizens.values()).find(
-      (citizen) => citizen.aadharNumber === aadharNumber
-    );
+    const [citizen] = await db.select().from(citizens).where(eq(citizens.aadharNumber, aadharNumber));
+    return citizen || undefined;
   }
 
   async getAllCitizens(): Promise<Citizen[]> {
-    return Array.from(this.citizens.values());
+    return await db.select().from(citizens);
   }
 
   async searchCitizens(query: string, district?: string, gender?: string): Promise<Citizen[]> {
-    let results = Array.from(this.citizens.values());
-
+    let queryBuilder = db.select().from(citizens);
+    
+    const conditions = [];
+    
     if (query) {
-      const lowerQuery = query.toLowerCase();
-      results = results.filter(
-        (citizen) => 
-          citizen.name.toLowerCase().includes(lowerQuery) ||
-          citizen.aadharNumber.includes(query)
+      conditions.push(
+        sql`${citizens.name} ILIKE ${'%' + query + '%'} OR ${citizens.aadharNumber} LIKE ${'%' + query + '%'}`
       );
     }
-
+    
     if (district) {
-      results = results.filter((citizen) => citizen.district === district);
+      conditions.push(eq(citizens.district, district));
     }
-
+    
     if (gender) {
-      results = results.filter((citizen) => citizen.gender === gender);
+      conditions.push(eq(citizens.gender, gender));
     }
-
-    return results;
+    
+    if (conditions.length > 0) {
+      queryBuilder = queryBuilder.where(
+        conditions.length === 1 ? conditions[0] : and(...conditions)
+      );
+    }
+    
+    return await queryBuilder;
   }
 
   async createCitizen(insertCitizen: InsertCitizen): Promise<Citizen> {
-    const id = this.citizenIdCounter++;
     const now = new Date().toISOString();
-    const citizen: Citizen = { 
-      id,
-      name: insertCitizen.name,
-      aadharNumber: insertCitizen.aadharNumber,
-      dateOfBirth: insertCitizen.dateOfBirth,
-      gender: insertCitizen.gender,
-      address: insertCitizen.address,
-      district: insertCitizen.district,
-      pincode: insertCitizen.pincode,
-      photoUrl: insertCitizen.photoUrl || null,
-      status: "active",
-      createdAt: now,
-      updatedAt: now
-    };
-    this.citizens.set(id, citizen);
+    const [citizen] = await db
+      .insert(citizens)
+      .values({
+        ...insertCitizen,
+        status: "active",
+        createdAt: now,
+        updatedAt: now
+      })
+      .returning();
     return citizen;
   }
 
   async updateCitizen(id: number, updateData: Partial<InsertCitizen>): Promise<Citizen | undefined> {
-    const citizen = this.citizens.get(id);
-    if (!citizen) return undefined;
-
-    const updatedCitizen: Citizen = {
-      ...citizen,
-      ...updateData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    this.citizens.set(id, updatedCitizen);
-    return updatedCitizen;
+    const [citizen] = await db
+      .update(citizens)
+      .set({
+        ...updateData,
+        updatedAt: new Date().toISOString()
+      })
+      .where(eq(citizens.id, id))
+      .returning();
+    return citizen || undefined;
   }
 
   async deleteCitizen(id: number): Promise<boolean> {
-    return this.citizens.delete(id);
+    const result = await db.delete(citizens).where(eq(citizens.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   async verifyCitizen(aadharNumber: string, dateOfBirth: string): Promise<Citizen | undefined> {
-    const citizen = await this.getCitizenByAadhar(aadharNumber);
-    if (citizen && citizen.dateOfBirth === dateOfBirth) {
-      return citizen;
-    }
-    return undefined;
+    const [citizen] = await db
+      .select()
+      .from(citizens)
+      .where(and(
+        eq(citizens.aadharNumber, aadharNumber),
+        eq(citizens.dateOfBirth, dateOfBirth)
+      ));
+    return citizen || undefined;
   }
 
   // Election methods
   async getAllElections(): Promise<Election[]> {
-    return Array.from(this.elections.values());
+    return await db.select().from(elections);
   }
 
   async getElection(id: number): Promise<Election | undefined> {
-    return this.elections.get(id);
+    const [election] = await db.select().from(elections).where(eq(elections.id, id));
+    return election || undefined;
   }
 
   async createElection(insertElection: InsertElection): Promise<Election> {
-    const id = this.electionIdCounter++;
     const now = new Date().toISOString();
-    const election: Election = {
-      id,
-      title: insertElection.title,
-      description: insertElection.description,
-      startDate: insertElection.startDate,
-      endDate: insertElection.endDate,
-      status: insertElection.status || "upcoming",
-      createdAt: now,
-      updatedAt: now
-    };
-    this.elections.set(id, election);
+    const [election] = await db
+      .insert(elections)
+      .values({
+        ...insertElection,
+        status: insertElection.status || "upcoming",
+        createdAt: now,
+        updatedAt: now
+      })
+      .returning();
     return election;
   }
 
   async updateElection(id: number, updateData: Partial<InsertElection>): Promise<Election | undefined> {
-    const election = this.elections.get(id);
-    if (!election) return undefined;
-
-    const updatedElection: Election = {
-      ...election,
-      ...updateData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    this.elections.set(id, updatedElection);
-    return updatedElection;
+    const [election] = await db
+      .update(elections)
+      .set({
+        ...updateData,
+        updatedAt: new Date().toISOString()
+      })
+      .where(eq(elections.id, id))
+      .returning();
+    return election || undefined;
   }
 
   async deleteElection(id: number): Promise<boolean> {
-    return this.elections.delete(id);
+    const result = await db.delete(elections).where(eq(elections.id, id));
+    return result.rowCount > 0;
   }
 
   // Candidate methods
   async getCandidatesByElection(electionId: number): Promise<Candidate[]> {
-    return Array.from(this.candidates.values()).filter(
-      candidate => candidate.electionId === electionId
-    );
+    return await db.select().from(candidates).where(eq(candidates.electionId, electionId));
   }
 
   async getCandidate(id: number): Promise<Candidate | undefined> {
-    return this.candidates.get(id);
+    const [candidate] = await db.select().from(candidates).where(eq(candidates.id, id));
+    return candidate || undefined;
   }
 
   async createCandidate(insertCandidate: InsertCandidate): Promise<Candidate> {
-    const id = this.candidateIdCounter++;
     const now = new Date().toISOString();
-    const candidate: Candidate = {
-      id,
-      electionId: insertCandidate.electionId,
-      name: insertCandidate.name,
-      party: insertCandidate.party,
-      symbol: insertCandidate.symbol,
-      photoUrl: insertCandidate.photoUrl || null,
-      manifesto: insertCandidate.manifesto || null,
-      createdAt: now
-    };
-    this.candidates.set(id, candidate);
+    const [candidate] = await db
+      .insert(candidates)
+      .values({
+        ...insertCandidate,
+        createdAt: now
+      })
+      .returning();
     return candidate;
   }
 
   async updateCandidate(id: number, updateData: Partial<InsertCandidate>): Promise<Candidate | undefined> {
-    const candidate = this.candidates.get(id);
-    if (!candidate) return undefined;
-
-    const updatedCandidate: Candidate = {
-      ...candidate,
-      ...updateData
-    };
-    
-    this.candidates.set(id, updatedCandidate);
-    return updatedCandidate;
+    const [candidate] = await db
+      .update(candidates)
+      .set(updateData)
+      .where(eq(candidates.id, id))
+      .returning();
+    return candidate || undefined;
   }
 
   async deleteCandidate(id: number): Promise<boolean> {
-    return this.candidates.delete(id);
+    const result = await db.delete(candidates).where(eq(candidates.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   // Voting methods
   async castVote(voteData: VoteData): Promise<Vote> {
-    const id = this.voteIdCounter++;
     const now = new Date().toISOString();
-    const vote: Vote = {
-      id,
-      electionId: voteData.electionId,
-      candidateId: voteData.candidateId,
-      voterAadhar: voteData.voterAadhar,
-      votedAt: now
-    };
-    this.votes.set(id, vote);
+    const [vote] = await db
+      .insert(votes)
+      .values({
+        electionId: voteData.electionId,
+        candidateId: voteData.candidateId,
+        voterAadhar: voteData.voterAadhar,
+        votedAt: now
+      })
+      .returning();
     return vote;
   }
 
   async hasVoted(electionId: number, voterAadhar: string): Promise<boolean> {
-    return Array.from(this.votes.values()).some(
-      vote => vote.electionId === electionId && vote.voterAadhar === voterAadhar
-    );
+    const [vote] = await db
+      .select()
+      .from(votes)
+      .where(and(
+        eq(votes.electionId, electionId),
+        eq(votes.voterAadhar, voterAadhar)
+      ));
+    return !!vote;
   }
 
   async getVotesByElection(electionId: number): Promise<Vote[]> {
-    return Array.from(this.votes.values()).filter(
-      vote => vote.electionId === electionId
-    );
+    return await db.select().from(votes).where(eq(votes.electionId, electionId));
   }
 
   async getElectionResults(electionId: number): Promise<{ candidateId: number; candidateName: string; party: string; voteCount: number }[]> {
-    const votes = await this.getVotesByElection(electionId);
-    const candidates = await this.getCandidatesByElection(electionId);
+    const electionVotes = await this.getVotesByElection(electionId);
+    const electionCandidates = await this.getCandidatesByElection(electionId);
     
     const voteCounts = new Map<number, number>();
-    votes.forEach(vote => {
+    electionVotes.forEach(vote => {
       const count = voteCounts.get(vote.candidateId) || 0;
       voteCounts.set(vote.candidateId, count + 1);
     });
 
-    return candidates.map(candidate => ({
+    return electionCandidates.map(candidate => ({
       candidateId: candidate.id,
       candidateName: candidate.name,
       party: candidate.party,
@@ -422,19 +405,19 @@ export class MemStorage implements IStorage {
       throw new Error("This Aadhar number is already registered as a voter.");
     }
 
-    const id = this.voterRegistrationIdCounter++;
     const now = new Date().toISOString();
-    const voterIdNumber = `VID${Date.now()}${id}`;
+    const voterIdNumber = `VID${Date.now()}${citizen.id}`;
     
-    const registration: VoterRegistration = {
-      id,
-      citizenId: citizen.id,
-      voterIdNumber,
-      registeredAt: now,
-      status: "active"
-    };
+    const [registration] = await db
+      .insert(voterRegistrations)
+      .values({
+        citizenId: citizen.id,
+        voterIdNumber,
+        registeredAt: now,
+        status: "active"
+      })
+      .returning();
     
-    this.voterRegistrations.set(id, registration);
     return registration;
   }
 
@@ -442,9 +425,12 @@ export class MemStorage implements IStorage {
     const citizen = await this.getCitizenByAadhar(aadharNumber);
     if (!citizen) return undefined;
 
-    return Array.from(this.voterRegistrations.values()).find(
-      registration => registration.citizenId === citizen.id
-    );
+    const [registration] = await db
+      .select()
+      .from(voterRegistrations)
+      .where(eq(voterRegistrations.citizenId, citizen.id));
+    
+    return registration || undefined;
   }
 
   async isEligibleToVote(aadharNumber: string, dateOfBirth: string): Promise<boolean> {
@@ -456,4 +442,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
