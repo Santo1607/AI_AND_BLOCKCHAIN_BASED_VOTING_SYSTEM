@@ -122,7 +122,7 @@ export function CitizensTable() {
                   <SelectValue placeholder="All Districts" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Districts</SelectItem>
+                  <SelectItem value="all">All Districts</SelectItem>
                   <SelectItem value="Mumbai">Mumbai</SelectItem>
                   <SelectItem value="Delhi">Delhi</SelectItem>
                   <SelectItem value="Bangalore">Bangalore</SelectItem>
@@ -137,7 +137,7 @@ export function CitizensTable() {
                   <SelectValue placeholder="All Genders" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Genders</SelectItem>
+                  <SelectItem value="all">All Genders</SelectItem>
                   <SelectItem value="male">Male</SelectItem>
                   <SelectItem value="female">Female</SelectItem>
                   <SelectItem value="other">Other</SelectItem>

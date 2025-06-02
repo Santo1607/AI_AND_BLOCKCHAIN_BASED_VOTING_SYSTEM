@@ -11,8 +11,8 @@ interface CitizenFilters {
 export function useCitizens(filters: CitizenFilters = {}) {
   const queryParams = new URLSearchParams();
   if (filters.search) queryParams.append("search", filters.search);
-  if (filters.district) queryParams.append("district", filters.district);
-  if (filters.gender) queryParams.append("gender", filters.gender);
+  if (filters.district && filters.district !== "all") queryParams.append("district", filters.district);
+  if (filters.gender && filters.gender !== "all") queryParams.append("gender", filters.gender);
 
   const { data: citizens, isLoading, error } = useQuery<Citizen[]>({
     queryKey: ["/api/citizens", filters],
