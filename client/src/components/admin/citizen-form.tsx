@@ -276,19 +276,94 @@ export function CitizenForm({ onSuccess }: CitizenFormProps) {
               </div>
             </div>
 
-            {/* Photo Upload */}
+            {/* Photo Capture */}
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-6 pb-2 border-b border-gray-200 flex items-center">
                 <Camera className="w-5 h-5 mr-2 text-blue-600" />
-                Photo Upload
+                Live Photo Capture
               </h3>
               
-              <FileUpload
-                onFileSelect={setPhotoFile}
-                accept="image/*"
-                maxSize={2 * 1024 * 1024} // 2MB
-                className="max-w-md"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Capture Method
+                  </label>
+                  <div className="flex space-x-4">
+                    <Button
+                      type="button"
+                      variant={photoMethod === "camera" ? "default" : "outline"}
+                      onClick={() => setPhotoMethod("camera")}
+                      className="flex-1"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Live Camera
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={photoMethod === "upload" ? "default" : "outline"}
+                      onClick={() => setPhotoMethod("upload")}
+                      className="flex-1"
+                    >
+                      Upload File
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  {photoMethod === "camera" ? (
+                    <div>
+                      {!capturedPhoto ? (
+                        <Button
+                          type="button"
+                          onClick={() => setShowCamera(true)}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Camera className="w-4 h-4 mr-2" />
+                          Start Camera Capture
+                        </Button>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="relative">
+                            <img
+                              src={capturedPhoto}
+                              alt="Captured"
+                              className="w-full h-32 object-cover rounded-lg border"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setCapturedPhoto(null);
+                              setShowCamera(true);
+                            }}
+                            className="w-full"
+                          >
+                            Retake Photo
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <FileUpload
+                      onFileSelect={setPhotoFile}
+                      accept="image/*"
+                      maxSize={2 * 1024 * 1024}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {showCamera && (
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                  <CameraCapture
+                    title="Capture Citizen Photo"
+                    onCapture={handleCameraCapture}
+                    onCancel={() => setShowCamera(false)}
+                    className="max-w-2xl w-full"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Biometric Placeholders */}

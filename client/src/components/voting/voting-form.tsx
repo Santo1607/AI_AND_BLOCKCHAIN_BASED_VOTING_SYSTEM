@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { verificationSchema, type VerificationData, type Election, type Candidate } from "@shared/schema";
+import { BiometricVerification } from "./biometric-verification";
 import { Vote, IdCard, Calendar, ArrowLeft, CheckCircle, AlertCircle, User } from "lucide-react";
 
 interface VotingFormProps {
@@ -17,8 +18,9 @@ interface VotingFormProps {
 }
 
 export function VotingForm({ onBack }: VotingFormProps) {
-  const [step, setStep] = useState<"verify" | "vote" | "success">("verify");
+  const [step, setStep] = useState<"verify" | "biometric" | "vote" | "success">("verify");
   const [voterData, setVoterData] = useState<{ aadharNumber: string; voterIdNumber: string } | null>(null);
+  const [citizenData, setCitizenData] = useState<{ name: string; photoUrl: string | null } | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const { toast } = useToast();
@@ -75,12 +77,20 @@ export function VotingForm({ onBack }: VotingFormProps) {
           });
           return;
         }
+
+        // Fetch citizen data for biometric verification
+        const verifyResponse = await apiRequest("POST", "/api/verify", data);
+        const verifyResult = await verifyResponse.json();
         
-        setStep("vote");
-        toast({
-          title: "Verification Successful",
-          description: "You are eligible to vote. Please select your candidate.",
-        });
+        if (verifyResult.success) {
+          setCitizenData({
+            name: verifyResult.citizen.name,
+            photoUrl: verifyResult.citizen.photoUrl
+          });
+          setStep("biometric");
+        } else {
+          throw new Error("Unable to fetch citizen data for verification.");
+        }
       } else {
         throw new Error(result.message);
       }
@@ -90,6 +100,25 @@ export function VotingForm({ onBack }: VotingFormProps) {
         description: error.message || "Unable to verify voter eligibility.",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleBiometricVerification = (verified: boolean) => {
+    if (verified) {
+      setStep("vote");
+      toast({
+        title: "Biometric Verification Successful",
+        description: "Identity confirmed. You may now proceed to vote.",
+      });
+    } else {
+      toast({
+        title: "Biometric Verification Failed",
+        description: "Identity verification failed. Please try again or contact support.",
+        variant: "destructive"
+      });
+      setStep("verify");
+      setVoterData(null);
+      setCitizenData(null);
     }
   };
 
@@ -191,6 +220,40 @@ export function VotingForm({ onBack }: VotingFormProps) {
               </Button>
             </CardContent>
           </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "biometric") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Vote className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900">Digital Voting</h1>
+                  <p className="text-sm text-gray-500">Biometric Verification</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => setStep("verify")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <BiometricVerification
+            citizenName={citizenData?.name || ""}
+            storedPhotoUrl={citizenData?.photoUrl}
+            onVerificationComplete={handleBiometricVerification}
+          />
         </div>
       </div>
     );
