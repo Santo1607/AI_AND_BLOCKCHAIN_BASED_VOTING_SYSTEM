@@ -32,7 +32,22 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setIsStreaming(true);
+        
+        // Wait for video to load and start playing
+        await new Promise((resolve, reject) => {
+          if (!videoRef.current) return reject(new Error("Video element not found"));
+          
+          const video = videoRef.current;
+          video.onloadedmetadata = () => {
+            video.play()
+              .then(() => {
+                setIsStreaming(true);
+                resolve(true);
+              })
+              .catch(reject);
+          };
+          video.onerror = reject;
+        });
       }
     } catch (err) {
       setError("Unable to access camera. Please ensure you have granted camera permissions.");
@@ -49,17 +64,35 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
   }, []);
 
   const capturePhoto = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {
+      console.error("Video or canvas ref not available");
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
-    if (!context) return;
+    if (!context) {
+      console.error("Cannot get canvas context");
+      return;
+    }
+
+    // Ensure video is playing and has dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      console.error("Video not ready for capture");
+      setError("Video not ready. Please wait for camera to fully initialize.");
+      return;
+    }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0);
+    
+    // Mirror the image horizontally to match the video display
+    context.save();
+    context.scale(-1, 1);
+    context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+    context.restore();
 
     const imageData = canvas.toDataURL("image/jpeg", 0.8);
     setCapturedImage(imageData);
@@ -111,11 +144,7 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
               muted
               playsInline
               className="w-full h-full object-cover"
-              onLoadedMetadata={() => {
-                if (videoRef.current) {
-                  videoRef.current.play().catch(console.error);
-                }
-              }}
+              style={{ transform: 'scaleX(-1)' }} // Mirror the video like a selfie camera
             />
           )}
 
