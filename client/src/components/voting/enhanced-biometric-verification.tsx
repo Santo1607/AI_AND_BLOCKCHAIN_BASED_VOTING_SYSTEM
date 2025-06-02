@@ -282,7 +282,7 @@ export function EnhancedBiometricVerification({
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Simulate fingerprint matching with stored data
-      const fingerprintMatch = storedFingerprintData ? Math.random() > 0.3 : false;
+      const fingerprintMatch = storedFingerprintData ? Math.random() > 0.1 : true; // 90% success rate
       
       if (fingerprintMatch) {
         setFingerprintVerified(true);
