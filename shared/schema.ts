@@ -55,6 +55,8 @@ export const votes = pgTable("votes", {
   electionId: integer("election_id").notNull(),
   candidateId: integer("candidate_id").notNull(),
   voterAadhar: text("voter_aadhar").notNull(),
+  blockchainHash: text("blockchain_hash"),
+  transactionHash: text("transaction_hash"),
   votedAt: text("voted_at").notNull(),
 });
 
@@ -107,6 +109,8 @@ export const voteSchema = z.object({
   electionId: z.number(),
   candidateId: z.number(),
   voterAadhar: z.string().regex(/^\d{4}-\d{4}-\d{4}$/, "Aadhar number must be in XXXX-XXXX-XXXX format"),
+  blockchainHash: z.string().optional(),
+  transactionHash: z.string().optional(),
 });
 
 export const voterRegistrationSchema = z.object({

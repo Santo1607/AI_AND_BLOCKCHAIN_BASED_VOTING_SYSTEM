@@ -353,6 +353,8 @@ export class DatabaseStorage implements IStorage {
         electionId: voteData.electionId,
         candidateId: voteData.candidateId,
         voterAadhar: voteData.voterAadhar,
+        blockchainHash: voteData.blockchainHash,
+        transactionHash: voteData.transactionHash,
         votedAt: now
       })
       .returning();
