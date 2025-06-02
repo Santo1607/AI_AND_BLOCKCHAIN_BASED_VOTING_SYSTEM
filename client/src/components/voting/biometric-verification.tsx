@@ -5,7 +5,8 @@ import { CameraCapture } from "@/components/ui/camera-capture";
 import { Shield, CheckCircle, XCircle, Camera, User } from "lucide-react";
 
 interface BiometricVerificationProps {
-  citizenPhoto: string | null;
+  citizenPhoto?: string | null;
+  storedPhotoUrl?: string | null;
   citizenName: string;
   onVerificationComplete: (verified: boolean) => void;
   onCancel?: () => void;
@@ -13,6 +14,7 @@ interface BiometricVerificationProps {
 
 export function BiometricVerification({ 
   citizenPhoto, 
+  storedPhotoUrl,
   citizenName, 
   onVerificationComplete, 
   onCancel 

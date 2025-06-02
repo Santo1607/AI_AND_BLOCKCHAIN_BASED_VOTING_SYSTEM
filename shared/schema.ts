@@ -20,6 +20,7 @@ export const citizens = pgTable("citizens", {
   district: text("district").notNull(),
   pincode: text("pincode").notNull(),
   photoUrl: text("photo_url"),
+  fingerprintData: text("fingerprint_data"),
   status: text("status").notNull().default("active"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),

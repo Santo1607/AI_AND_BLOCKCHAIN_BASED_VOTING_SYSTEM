@@ -111,6 +111,11 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture Photo", cl
               muted
               playsInline
               className="w-full h-full object-cover"
+              onLoadedMetadata={() => {
+                if (videoRef.current) {
+                  videoRef.current.play().catch(console.error);
+                }
+              }}
             />
           )}
 
