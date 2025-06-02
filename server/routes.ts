@@ -402,6 +402,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Candidate management routes
+  app.get("/api/candidates", async (req, res) => {
+    try {
+      const { constituency } = req.query;
+      let candidates;
+      
+      if (constituency) {
+        candidates = await storage.getCandidatesByElection(1); // Current election
+        candidates = candidates.filter(c => c.constituency === constituency);
+      } else {
+        candidates = await storage.getCandidatesByElection(1);
+      }
+      
+      res.json(candidates);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/candidates", upload.single('photo'), async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const candidateData = {
+        ...req.body,
+        electionId: 1, // Current election
+        photoUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const candidate = await storage.createCandidate(candidateData);
+      res.json(candidate);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/candidates/:id", upload.single('photo'), async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const candidateId = parseInt(req.params.id);
+      const updateData = {
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (req.file) {
+        updateData.photoUrl = `/uploads/${req.file.filename}`;
+      }
+
+      const candidate = await storage.updateCandidate(candidateId, updateData);
+      if (!candidate) {
+        return res.status(404).json({ message: "Candidate not found" });
+      }
+
+      res.json(candidate);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/candidates/:id", async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const candidateId = parseInt(req.params.id);
+      const success = await storage.deleteCandidate(candidateId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Candidate not found" });
+      }
+
+      res.json({ message: "Candidate deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Election results
   app.get("/api/elections/:electionId/results", async (req, res) => {
     try {

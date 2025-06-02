@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { verificationSchema, type VerificationData, type Election, type Candidate } from "@shared/schema";
-import { BiometricVerification } from "./biometric-verification";
+import { EnhancedBiometricVerification } from "./enhanced-biometric-verification";
 import { Vote, IdCard, Calendar, ArrowLeft, CheckCircle, AlertCircle, User } from "lucide-react";
 
 interface VotingFormProps {
@@ -19,8 +19,8 @@ interface VotingFormProps {
 
 export function VotingForm({ onBack }: VotingFormProps) {
   const [step, setStep] = useState<"verify" | "biometric" | "vote" | "success">("verify");
-  const [voterData, setVoterData] = useState<{ aadharNumber: string; voterIdNumber: string } | null>(null);
-  const [citizenData, setCitizenData] = useState<{ name: string; photoUrl: string | null } | null>(null);
+  const [voterData, setVoterData] = useState<{ aadharNumber: string; voterIdNumber: string; fingerprintData?: string } | null>(null);
+  const [citizenData, setCitizenData] = useState<{ name: string; photoUrl: string | null; fingerprintData?: string } | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const { toast } = useToast();
@@ -249,10 +249,25 @@ export function VotingForm({ onBack }: VotingFormProps) {
         </header>
 
         <div className="max-w-2xl mx-auto px-4 py-12">
-          <BiometricVerification
-            citizenName={citizenData?.name || ""}
-            storedPhotoUrl={citizenData?.photoUrl}
-            onVerificationComplete={handleBiometricVerification}
+          <EnhancedBiometricVerification
+            storedPhotoUrl={citizenData?.photoUrl ?? undefined}
+            storedFingerprintData={citizenData?.fingerprintData}
+            onVerificationComplete={(success, results) => {
+              if (success) {
+                setStep("vote");
+                toast({
+                  title: "Verification Successful",
+                  description: `Biometric verification completed with ${Math.round(results.confidence)}% confidence.`
+                });
+              } else {
+                toast({
+                  title: "Verification Failed",
+                  description: "Biometric verification failed. Please try again.",
+                  variant: "destructive"
+                });
+              }
+            }}
+            onCancel={() => setStep("verify")}
           />
         </div>
       </div>
