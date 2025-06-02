@@ -47,20 +47,20 @@ export function BiometricVerification({
         return;
       }
       
-      // Simulate realistic facial verification with some randomness
-      // 70% chance of success on first try, simulating real-world accuracy
+      // Simulate attendance system-like verification (more lenient)
+      // 85% chance of success, like office attendance systems
       const verificationAttempt = Math.random();
       let mockScore;
       
-      if (verificationAttempt < 0.7) {
+      if (verificationAttempt < 0.85) {
         // Successful verification
-        mockScore = 75 + Math.random() * 20; // 75-95%
+        mockScore = 70 + Math.random() * 25; // 70-95%
       } else {
-        // Failed verification
-        mockScore = 45 + Math.random() * 25; // 45-70%
+        // Failed verification - mostly lighting/positioning issues
+        mockScore = 50 + Math.random() * 18; // 50-68%
       }
       
-      const threshold = 75; // Realistic threshold
+      const threshold = 70; // More lenient threshold like attendance systems
       const isVerified = mockScore >= threshold;
       
       setSimilarityScore(mockScore);
