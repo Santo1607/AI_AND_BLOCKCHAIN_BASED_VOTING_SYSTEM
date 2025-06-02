@@ -227,14 +227,14 @@ function CandidateForm({ candidate, onSuccess, onCancel }: CandidateFormProps) {
 
 export function CandidateManagement() {
   const { toast } = useToast();
-  const [selectedConstituency, setSelectedConstituency] = useState<string>('');
+  const [selectedConstituency, setSelectedConstituency] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ['/api/candidates', selectedConstituency],
     queryFn: async () => {
-      const url = selectedConstituency 
+      const url = selectedConstituency && selectedConstituency !== 'all'
         ? `/api/candidates?constituency=${encodeURIComponent(selectedConstituency)}`
         : '/api/candidates';
       const response = await fetch(url);
@@ -307,7 +307,7 @@ export function CandidateManagement() {
                   <SelectValue placeholder="All Constituencies" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Constituencies</SelectItem>
+                  <SelectItem value="all">All Constituencies</SelectItem>
                   {constituencies.map((constituency) => (
                     <SelectItem key={constituency} value={constituency}>
                       {constituency}
