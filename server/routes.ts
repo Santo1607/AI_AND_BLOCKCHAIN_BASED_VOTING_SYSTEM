@@ -2,7 +2,15 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, insertCitizenSchema, verificationSchema } from "@shared/schema";
+import { 
+  loginSchema, 
+  insertCitizenSchema, 
+  verificationSchema,
+  insertElectionSchema,
+  insertCandidateSchema,
+  voteSchema,
+  voterRegistrationSchema
+} from "@shared/schema";
 import multer from "multer";
 import path from "path";
 
@@ -234,6 +242,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
         verificationsToday: Math.floor(totalCitizens * 0.08), // 8% verified today
         systemStatus: "operational"
       });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Voting system routes
+
+  // Elections management
+  app.get("/api/elections", async (req, res) => {
+    try {
+      const elections = await storage.getAllElections();
+      res.json(elections);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/elections/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const election = await storage.getElection(id);
+      
+      if (!election) {
+        return res.status(404).json({ message: "Election not found" });
+      }
+      
+      res.json(election);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/elections", async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const electionData = insertElectionSchema.parse(req.body);
+      const election = await storage.createElection(electionData);
+      res.status(201).json(election);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Candidates management
+  app.get("/api/elections/:electionId/candidates", async (req, res) => {
+    try {
+      const electionId = parseInt(req.params.electionId);
+      const candidates = await storage.getCandidatesByElection(electionId);
+      res.json(candidates);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/candidates", async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const candidateData = insertCandidateSchema.parse(req.body);
+      const candidate = await storage.createCandidate(candidateData);
+      res.status(201).json(candidate);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Voter registration
+  app.post("/api/voter/register", async (req, res) => {
+    try {
+      const registrationData = voterRegistrationSchema.parse(req.body);
+      const registration = await storage.registerVoter(registrationData);
+      res.status(201).json({
+        success: true,
+        voterIdNumber: registration.voterIdNumber,
+        message: "Voter registration successful"
+      });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/voter/check-eligibility", async (req, res) => {
+    try {
+      const { aadharNumber, dateOfBirth } = verificationSchema.parse(req.body);
+      const isEligible = await storage.isEligibleToVote(aadharNumber, dateOfBirth);
+      
+      if (isEligible) {
+        const registration = await storage.getVoterRegistration(aadharNumber);
+        res.json({
+          eligible: true,
+          voterIdNumber: registration?.voterIdNumber,
+          message: "You are eligible to vote"
+        });
+      } else {
+        res.json({
+          eligible: false,
+          message: "Not eligible to vote. Please register first or verify your details."
+        });
+      }
+    } catch (error: any) {
+      res.status(400).json({ eligible: false, message: error.message });
+    }
+  });
+
+  // Voting
+  app.post("/api/vote", async (req, res) => {
+    try {
+      const voteData = voteSchema.parse(req.body);
+      
+      // Check if voter is eligible
+      const citizen = await storage.getCitizenByAadhar(voteData.voterAadhar);
+      if (!citizen) {
+        return res.status(404).json({ success: false, message: "Voter not found" });
+      }
+
+      const isEligible = await storage.isEligibleToVote(voteData.voterAadhar, citizen.dateOfBirth);
+      if (!isEligible) {
+        return res.status(403).json({ success: false, message: "Not eligible to vote" });
+      }
+
+      // Check if already voted
+      const hasVoted = await storage.hasVoted(voteData.electionId, voteData.voterAadhar);
+      if (hasVoted) {
+        return res.status(409).json({ success: false, message: "You have already voted in this election" });
+      }
+
+      const vote = await storage.castVote(voteData);
+      res.json({ success: true, message: "Vote cast successfully", voteId: vote.id });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/voter/check-vote-status", async (req, res) => {
+    try {
+      const { electionId, aadharNumber } = req.body;
+      const hasVoted = await storage.hasVoted(electionId, aadharNumber);
+      res.json({ hasVoted });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Election results
+  app.get("/api/elections/:electionId/results", async (req, res) => {
+    try {
+      const electionId = parseInt(req.params.electionId);
+      const results = await storage.getElectionResults(electionId);
+      res.json(results);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
