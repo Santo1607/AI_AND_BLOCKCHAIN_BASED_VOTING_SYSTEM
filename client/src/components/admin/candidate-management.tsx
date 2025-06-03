@@ -95,11 +95,14 @@ function CandidateForm({ candidate, onSuccess, onCancel }: CandidateFormProps) {
 
   const onSubmit = async (data: InsertCandidate) => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, value.toString());
-      }
-    });
+    
+    // Only append non-empty required fields
+    if (data.name) formData.append('name', data.name);
+    if (data.party) formData.append('party', data.party);
+    if (data.constituency) formData.append('constituency', data.constituency);
+    if (data.symbol) formData.append('symbol', data.symbol);
+    if (data.manifesto) formData.append('manifesto', data.manifesto);
+    formData.append('electionId', '1'); // Current election
 
     if (selectedFile) {
       formData.append('photo', selectedFile);

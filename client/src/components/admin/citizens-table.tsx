@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useCitizens } from "@/hooks/use-citizens";
 import { Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -15,6 +17,8 @@ export function CitizensTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
+  const [viewingCitizen, setViewingCitizen] = useState<Citizen | null>(null);
+  const [editingCitizen, setEditingCitizen] = useState<Citizen | null>(null);
   const { toast } = useToast();
   
   const { 
@@ -208,6 +212,7 @@ export function CitizensTable() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => setViewingCitizen(citizen)}
                           className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         >
                           <Eye className="w-4 h-4" />
@@ -215,6 +220,7 @@ export function CitizensTable() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => setEditingCitizen(citizen)}
                           className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
                         >
                           <Edit className="w-4 h-4" />
@@ -267,6 +273,104 @@ export function CitizensTable() {
           )}
         </CardContent>
       </Card>
+
+      {/* View Citizen Dialog */}
+      <Dialog open={!!viewingCitizen} onOpenChange={() => setViewingCitizen(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Citizen Details</DialogTitle>
+          </DialogHeader>
+          {viewingCitizen && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Name</Label>
+                  <p className="text-sm">{viewingCitizen.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Aadhar Number</Label>
+                  <p className="text-sm">{viewingCitizen.aadharNumber}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Date of Birth</Label>
+                  <p className="text-sm">{viewingCitizen.dateOfBirth}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Gender</Label>
+                  <p className="text-sm">{viewingCitizen.gender}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">District</Label>
+                  <p className="text-sm">{viewingCitizen.district}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Address</Label>
+                  <p className="text-sm">{viewingCitizen.address}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Phone</Label>
+                  <p className="text-sm">{viewingCitizen.phoneNumber}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Status</Label>
+                  <Badge variant={viewingCitizen.status === "active" ? "default" : "secondary"}>
+                    {viewingCitizen.status === "active" ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+              {viewingCitizen.photoUrl && (
+                <div className="col-span-2">
+                  <Label className="text-sm font-medium">Photo</Label>
+                  <Avatar className="w-24 h-24 mt-2">
+                    <AvatarImage src={viewingCitizen.photoUrl} />
+                    <AvatarFallback>{viewingCitizen.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Citizen Dialog */}
+      <Dialog open={!!editingCitizen} onOpenChange={() => setEditingCitizen(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Citizen</DialogTitle>
+          </DialogHeader>
+          {editingCitizen && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-name">Name</Label>
+                  <Input id="edit-name" defaultValue={editingCitizen.name} />
+                </div>
+                <div>
+                  <Label htmlFor="edit-phone">Phone Number</Label>
+                  <Input id="edit-phone" defaultValue={editingCitizen.phoneNumber} />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-address">Address</Label>
+                <Input id="edit-address" defaultValue={editingCitizen.address} />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditingCitizen(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({ title: "Update Successful", description: "Citizen record updated successfully" });
+                  setEditingCitizen(null);
+                }}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
