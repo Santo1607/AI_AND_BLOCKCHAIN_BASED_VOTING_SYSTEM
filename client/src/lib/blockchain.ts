@@ -34,7 +34,8 @@ export class VotingBlockchain {
 
   // Create a hash for the voter (anonymized)
   createVoterHash(aadharNumber: string, electionId: number): string {
-    const data = `${aadharNumber}-${electionId}-${process.env.BLOCKCHAIN_SALT || 'default-salt'}`;
+    const salt = 'blockchain-vote-salt-2024';
+    const data = `${aadharNumber}-${electionId}-${salt}`;
     return ethers.keccak256(ethers.toUtf8Bytes(data));
   }
 
