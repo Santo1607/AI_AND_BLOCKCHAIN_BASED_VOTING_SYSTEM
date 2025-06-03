@@ -370,16 +370,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get election timing settings
       const election = await storage.getElection(1); // Active election
-      const currentHour = new Date().getHours();
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeInMinutes = currentHour * 60 + currentMinute;
       
-      const votingStartHour = election?.votingStartTime ? parseInt(election.votingStartTime.split(':')[0]) : 8;
-      const votingEndHour = election?.votingEndTime ? parseInt(election.votingEndTime.split(':')[0]) : 17;
+      // Parse election timing
+      const votingStartTime = election?.votingStartTime || "08:00";
+      const votingEndTime = election?.votingEndTime || "17:00";
       
-      if (currentHour < votingStartHour || currentHour >= votingEndHour) {
+      const [startHour, startMin] = votingStartTime.split(':').map(Number);
+      const [endHour, endMin] = votingEndTime.split(':').map(Number);
+      
+      const startTimeInMinutes = startHour * 60 + startMin;
+      const endTimeInMinutes = endHour * 60 + endMin;
+      
+      if (currentTimeInMinutes < startTimeInMinutes || currentTimeInMinutes >= endTimeInMinutes) {
         return res.status(403).json({ 
           success: false, 
-          message: `Voting is only allowed between ${election?.votingStartTime || '08:00'} and ${election?.votingEndTime || '17:00'}. Please come back during voting hours.`,
-          votingHours: `${election?.votingStartTime || '08:00'} - ${election?.votingEndTime || '17:00'}`
+          message: `Voting is only allowed between ${votingStartTime} and ${votingEndTime}. Please come back during voting hours.`,
+          votingHours: `${votingStartTime} - ${votingEndTime}`,
+          currentTime: `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
         });
       }
 
