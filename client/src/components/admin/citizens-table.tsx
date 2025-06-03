@@ -103,26 +103,27 @@ export function CitizensTable() {
   return (
     <div className="space-y-6">
       {/* Search and Filter */}
-      <Card className="card-shadow">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Search className="w-5 h-5 mr-2" />
-            Search Citizens
+      <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-gray-800 flex items-center gap-2">
+            <Search className="w-5 h-5 text-blue-600" />
+            Search & Filter Citizens
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search by name or Aadhar..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-focus"
+                className="pl-10 border-gray-200 focus:border-blue-400 focus:ring-blue-400 transition-all duration-200"
               />
             </div>
             <div>
               <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-                <SelectTrigger className="input-focus">
+                <SelectTrigger className="border-gray-200 focus:border-blue-400 focus:ring-blue-400 transition-all duration-200">
                   <SelectValue placeholder="All Districts" />
                 </SelectTrigger>
                 <SelectContent>
@@ -137,7 +138,7 @@ export function CitizensTable() {
             </div>
             <div>
               <Select value={selectedGender} onValueChange={setSelectedGender}>
-                <SelectTrigger className="input-focus">
+                <SelectTrigger className="border-gray-200 focus:border-blue-400 focus:ring-blue-400 transition-all duration-200">
                   <SelectValue placeholder="All Genders" />
                 </SelectTrigger>
                 <SelectContent>
@@ -159,27 +160,35 @@ export function CitizensTable() {
       </Card>
 
       {/* Citizens Table */}
-      <Card className="card-shadow">
-        <CardHeader>
-          <CardTitle>Citizen Records</CardTitle>
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center text-gray-800">
+              <Users className="w-5 h-5 mr-2 text-blue-600" />
+              Citizen Records ({filteredCitizens.length})
+            </span>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              Total: {filteredCitizens.length}
+            </Badge>
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead>Photo</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Aadhar Number</TableHead>
-                  <TableHead>DOB</TableHead>
-                  <TableHead>District</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-colors">
+                  <TableHead className="font-semibold text-gray-700">Photo</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Name</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Aadhar Number</TableHead>
+                  <TableHead className="font-semibold text-gray-700">DOB</TableHead>
+                  <TableHead className="font-semibold text-gray-700">District</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                  <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {citizens?.map((citizen) => (
-                  <TableRow key={citizen.id} className="hover:bg-gray-50">
+                  <TableRow key={citizen.id} className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100">
                     <TableCell>
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={citizen.photoUrl || undefined} />
