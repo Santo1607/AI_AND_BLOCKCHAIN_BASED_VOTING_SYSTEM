@@ -65,6 +65,20 @@ export const translations = {
     'candidates': 'Candidates',
     'reports': 'Reports',
     
+    // Voting Portal
+    'digitalVotingSystem': 'Digital Voting System',
+    'votingPlatformDescription': 'Secure, transparent, and accessible voting platform powered by Aadhar verification. Exercise your democratic right with confidence and convenience.',
+    'electionSchedule': 'Election Schedule',
+    'currentTime': 'Current Time',
+    'votingActive': 'Voting Active',
+    'votingClosedStatus': 'Voting Closed',
+    'voterRegistrationTitle': 'Voter Registration',
+    'voterRegistrationDesc': 'Register as a voter with Aadhar verification',
+    'castVoteTitle': 'Cast Your Vote',
+    'castVoteDesc': 'Secure blockchain-enabled voting process',
+    'viewResultsTitle': 'View Results',
+    'viewResultsDesc': 'Real-time election results and analytics',
+    
     // Admin Portal
     'adminLogin': 'Admin Login',
     'username': 'Username',
@@ -89,16 +103,13 @@ export const translations = {
     'verificationFailed': 'Verification Failed',
     'ageRequirement': 'You must be 18 years or older to register',
     
-    // Voting Portal
+    // Voting Process
     'voteNow': 'Vote Now',
     'registerToVote': 'Register to Vote',
-    'viewResults': 'View Results',
-    'voterRegistration': 'Voter Registration',
     'biometricVerification': 'Biometric Verification',
     'faceVerification': 'Face Verification',
     'fingerprintVerification': 'Fingerprint Verification',
     'selectCandidate': 'Select Candidate',
-    'castVote': 'Cast Vote',
     'voteSubmitted': 'Vote Submitted Successfully',
     'alreadyVoted': 'You have already voted in this election',
     'votingClosed': 'Voting is currently closed',
@@ -165,6 +176,20 @@ export const translations = {
     'elections': 'चुनाव',
     'candidates': 'उम्मीदवार',
     'reports': 'रिपोर्ट',
+    
+    // Voting Portal
+    'digitalVotingSystem': 'डिजिटल मतदान प्रणाली',
+    'votingPlatformDescription': 'आधार सत्यापन द्वारा संचालित सुरक्षित, पारदर्शी और सुलभ मतदान मंच। आत्मविश्वास और सुविधा के साथ अपने लोकतांत्रिक अधिकार का प्रयोग करें।',
+    'electionSchedule': 'चुनाव कार्यक्रम',
+    'currentTime': 'वर्तमान समय',
+    'votingActive': 'मतदान सक्रिय',
+    'votingClosedStatus': 'मतदान बंद',
+    'voterRegistrationTitle': 'मतदाता पंजीकरण',
+    'voterRegistrationDesc': 'आधार सत्यापन के साथ मतदाता के रूप में पंजीकरण करें',
+    'castVoteTitle': 'अपना मत डालें',
+    'castVoteDesc': 'सुरक्षित ब्लॉकचेन-सक्षम मतदान प्रक्रिया',
+    'viewResultsTitle': 'परिणाम देखें',
+    'viewResultsDesc': 'वास्तविक समय चुनाव परिणाम और विश्लेषण',
     
     // Admin Portal
     'adminLogin': 'प्रशासक लॉगिन',

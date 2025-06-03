@@ -153,10 +153,9 @@ export default function VotingPortal() {
           <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Vote className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Digital Voting System</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t('digitalVotingSystem')}</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Secure, transparent, and accessible voting platform powered by Aadhar verification. 
-            Exercise your democratic right with confidence and convenience.
+            {t('votingPlatformDescription')}
           </p>
         </div>
 
@@ -168,15 +167,15 @@ export default function VotingPortal() {
                 <div className="flex items-center space-x-3">
                   <Clock className="w-6 h-6 text-blue-600" />
                   <div>
-                    <h3 className="font-semibold text-gray-900">Election Schedule</h3>
+                    <h3 className="font-semibold text-gray-900">{t('electionSchedule')}</h3>
                     <p className="text-sm text-gray-600">
-                      Voting: {elections?.[0]?.votingStartTime || '08:00'} - {elections?.[0]?.votingEndTime || '17:00'} | Results: {elections?.[0]?.resultsTime || '18:00'} onwards
+                      {t('voteNow')}: {elections?.[0]?.votingStartTime || '08:00'} - {elections?.[0]?.votingEndTime || '17:00'} | {t('viewResultsTitle')}: {elections?.[0]?.resultsTime || '18:00'} onwards
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <p className="text-sm text-gray-500">Current Time</p>
+                    <p className="text-sm text-gray-500">{t('currentTime')}</p>
                     <p className="font-semibold text-gray-900">
                       {currentTime.toLocaleTimeString('en-IN', { 
                         hour12: true,
@@ -189,7 +188,7 @@ export default function VotingPortal() {
                     variant={votingStatus.isVotingTime ? "default" : "secondary"}
                     className={votingStatus.isVotingTime ? "bg-green-600" : ""}
                   >
-                    {votingStatus.isVotingTime ? "Voting Active" : "Voting Closed"}
+                    {votingStatus.isVotingTime ? t('votingActive') : t('votingClosedStatus')}
                   </Badge>
                 </div>
               </div>
@@ -213,15 +212,14 @@ export default function VotingPortal() {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-blue-600" />
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Voter Registration</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t('voterRegistrationTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-gray-600 mb-6">
-                Register as a voter using your Aadhar details. One-time registration process 
-                to enable voting in all future elections.
+                {t('voterRegistrationDesc')}
               </p>
               <Button className="w-full btn-primary">
-                Register Now
+                {t('registerToVote')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
