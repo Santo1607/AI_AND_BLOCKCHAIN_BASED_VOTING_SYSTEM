@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,22 +22,44 @@ export default function VotingPortal() {
     message: ""
   });
 
+  const { data: elections } = useQuery({
+    queryKey: ['/api/elections'],
+    queryFn: () => fetch('/api/elections').then(res => res.json())
+  });
+
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(now);
       
+      const activeElection = elections?.[0];
       const currentHour = now.getHours();
-      const isVotingTime = currentHour >= 8 && currentHour < 17;
-      const canViewResults = currentHour >= 18;
+      const currentMinute = now.getMinutes();
+      const currentTimeInMinutes = currentHour * 60 + currentMinute;
+      
+      // Parse election timing
+      const votingStartTime = activeElection?.votingStartTime || "08:00";
+      const votingEndTime = activeElection?.votingEndTime || "17:00";
+      const resultsTime = activeElection?.resultsTime || "18:00";
+      
+      const [startHour, startMin] = votingStartTime.split(':').map(Number);
+      const [endHour, endMin] = votingEndTime.split(':').map(Number);
+      const [resultHour, resultMin] = resultsTime.split(':').map(Number);
+      
+      const startTimeInMinutes = startHour * 60 + startMin;
+      const endTimeInMinutes = endHour * 60 + endMin;
+      const resultTimeInMinutes = resultHour * 60 + resultMin;
+      
+      const isVotingTime = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes;
+      const canViewResults = currentTimeInMinutes >= resultTimeInMinutes;
       
       let message = "";
-      if (currentHour < 8) {
-        message = "Voting will start at 8:00 AM. Please come back during voting hours.";
+      if (currentTimeInMinutes < startTimeInMinutes) {
+        message = `Voting will start at ${votingStartTime}. Please come back during voting hours.`;
       } else if (isVotingTime) {
         message = "Voting is currently active. You can cast your vote now.";
-      } else if (currentHour >= 17 && currentHour < 18) {
-        message = "Voting has ended for today. Results will be available at 6:00 PM.";
+      } else if (currentTimeInMinutes >= endTimeInMinutes && currentTimeInMinutes < resultTimeInMinutes) {
+        message = `Voting has ended. Results will be available at ${resultsTime}.`;
       } else {
         message = "Voting has ended. Election results are now available.";
       }
@@ -48,7 +71,7 @@ export default function VotingPortal() {
     const interval = setInterval(updateTime, 60000); // Update every minute
     
     return () => clearInterval(interval);
-  }, []);
+  }, [elections]);
 
   const handleSectionSelect = (section: VotingSection) => {
     if (section === "vote" && !votingStatus.isVotingTime) {
@@ -136,7 +159,7 @@ export default function VotingPortal() {
                   <div>
                     <h3 className="font-semibold text-gray-900">Election Schedule</h3>
                     <p className="text-sm text-gray-600">
-                      Voting: 8:00 AM - 5:00 PM | Results: 6:00 PM onwards
+                      Voting: {elections?.[0]?.votingStartTime || '08:00'} - {elections?.[0]?.votingEndTime || '17:00'} | Results: {elections?.[0]?.resultsTime || '18:00'} onwards
                     </p>
                   </div>
                 </div>
