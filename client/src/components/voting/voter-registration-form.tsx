@@ -224,6 +224,8 @@ export function VoterRegistrationForm({ onBack }: VoterRegistrationFormProps) {
                           {...field}
                           type="date"
                           className="text-lg px-6 py-4 input-focus"
+                          max={new Date().toISOString().split('T')[0]}
+                          min="1900-01-01"
                         />
                       </FormControl>
                       <p className="text-sm text-gray-500">

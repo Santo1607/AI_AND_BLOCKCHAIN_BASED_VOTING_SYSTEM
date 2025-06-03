@@ -71,7 +71,8 @@ export function AgeVerification({ onVerified, requiredAge = 18, title }: AgeVeri
             type="date"
             value={dateOfBirth}
             onChange={(e) => setDateOfBirth(e.target.value)}
-            max={maxDate.toISOString().split('T')[0]}
+            max={new Date().toISOString().split('T')[0]}
+            min="1900-01-01"
             className="w-full"
           />
         </div>

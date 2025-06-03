@@ -158,7 +158,13 @@ export function CitizenForm({ onSuccess }: CitizenFormProps) {
                     <FormItem>
                       <FormLabel>Date of Birth *</FormLabel>
                       <FormControl>
-                        <Input {...field} type="date" className="input-focus" />
+                        <Input 
+                          {...field} 
+                          type="date" 
+                          className="input-focus"
+                          max={new Date().toISOString().split('T')[0]}
+                          min="1900-01-01"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
