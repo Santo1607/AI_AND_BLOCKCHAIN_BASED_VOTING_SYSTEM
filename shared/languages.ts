@@ -82,6 +82,11 @@ export const translations = {
     'votingSystemDescription': 'Our voting system uses advanced encryption and Aadhar-based verification to ensure your vote is secure, anonymous, and counted accurately. Each vote is cryptographically protected and linked to verified citizen identity.',
     'aadharIntegration': 'Aadhar Integration',
     'aadharIntegrationDesc': 'Seamlessly integrated with the Aadhar management system for instant voter verification. Your existing Aadhar registration serves as the foundation for secure democratic participation.',
+    'digitalVotingPortal': 'Digital Voting Portal',
+    'governmentOfIndia': 'Government of India - Election Commission',
+    'currentElectionTitle': 'General Election 2024 - NOW ACTIVE',
+    'currentElectionDescription': 'National Parliamentary Election is currently open for voting. Make your voice heard in shaping the future of our nation.',
+    'viewLiveResults': 'View Live Results',
     
     // Admin Portal
     'adminLogin': 'Admin Login',
@@ -198,6 +203,11 @@ export const translations = {
     'votingSystemDescription': 'हमारी मतदान प्रणाली उन्नत एन्क्रिप्शन और आधार-आधारित सत्यापन का उपयोग करती है ताकि आपका मत सुरक्षित, गुमनाम और सटीक रूप से गिना जा सके। प्रत्येक मत क्रिप्टोग्राफिक रूप से सुरक्षित है और सत्यापित नागरिक पहचान से जुड़ा है।',
     'aadharIntegration': 'आधार एकीकरण',
     'aadharIntegrationDesc': 'तत्काल मतदाता सत्यापन के लिए आधार प्रबंधन प्रणाली के साथ निर्बाध रूप से एकीकृत। आपका मौजूदा आधार पंजीकरण सुरक्षित लोकतांत्रिक भागीदारी की नींव के रूप में कार्य करता है।',
+    'digitalVotingPortal': 'डिजिटल मतदान पोर्टल',
+    'governmentOfIndia': 'भारत सरकार - चुनाव आयोग',
+    'currentElectionTitle': 'आम चुनाव 2024 - अब सक्रिय',
+    'currentElectionDescription': 'राष्ट्रीय संसदीय चुनाव वर्तमान में मतदान के लिए खुला है। हमारे राष्ट्र का भविष्य आकार देने में अपनी आवाज सुनाएं।',
+    'viewLiveResults': 'लाइव परिणाम देखें',
     
     // Admin Portal
     'adminLogin': 'प्रशासक लॉगिन',

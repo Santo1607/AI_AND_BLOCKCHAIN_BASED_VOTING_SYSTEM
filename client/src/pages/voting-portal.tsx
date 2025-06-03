@@ -120,8 +120,8 @@ export default function VotingPortal() {
                 <Vote className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Digital Voting Portal</h1>
-                <p className="text-sm text-gray-500">Government of India - Election Commission</p>
+                <h1 className="text-xl font-semibold text-gray-900">{t('digitalVotingPortal')}</h1>
+                <p className="text-sm text-gray-500">{t('governmentOfIndia')}</p>
               </div>
             </div>
             
@@ -132,14 +132,14 @@ export default function VotingPortal() {
                 onClick={() => setLocation("/public")}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
               >
-                Aadhar Portal
+                {t('publicPortal')}
               </Button>
               <Button 
                 variant="outline"
                 onClick={() => setLocation("/admin")}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
               >
-                Admin Portal
+                {t('adminPortal')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -306,10 +306,9 @@ export default function VotingPortal() {
         {/* Current Election Status */}
         <Card className="bg-gradient-to-r from-green-600 to-blue-600 text-white">
           <CardContent className="p-8 text-center">
-            <h3 className="text-2xl font-bold mb-4">General Election 2024 - NOW ACTIVE</h3>
+            <h3 className="text-2xl font-bold mb-4">{t('currentElectionTitle')}</h3>
             <p className="text-lg opacity-90 mb-6">
-              National Parliamentary Election is currently open for voting. 
-              Make your voice heard in shaping the future of our nation.
+              {t('currentElectionDescription')}
             </p>
             <div className="flex justify-center space-x-4">
               <Button 
@@ -317,14 +316,14 @@ export default function VotingPortal() {
                 className="border-white text-white hover:bg-white hover:text-green-600"
                 onClick={() => handleSectionSelect("vote")}
               >
-                Vote Now
+                {t('voteNow')}
               </Button>
               <Button 
                 variant="outline" 
                 className="border-white text-white hover:bg-white hover:text-blue-600"
                 onClick={() => handleSectionSelect("results")}
               >
-                View Live Results
+                {t('viewLiveResults')}
               </Button>
             </div>
           </CardContent>
