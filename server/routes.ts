@@ -568,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Election results (Admin only, dynamic timing)
+  // Election results (Admin access - always available)
   app.get("/api/elections/:electionId/results", async (req, res) => {
     try {
       // Check if user is admin
@@ -584,8 +584,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Election not found" });
       }
 
+      // Admins can always view results for management purposes
+      const results = await storage.getElectionResults(electionId);
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Public election results (time-restricted for voters)
+  app.get("/api/public/elections/:electionId/results", async (req, res) => {
+    try {
+      const electionId = parseInt(req.params.electionId);
+      const election = await storage.getElection(electionId);
+      
+      if (!election) {
+        return res.status(404).json({ message: "Election not found" });
+      }
+
       // Check if results can be viewed based on election settings
-      const currentHour = new Date().getHours();
+      const istTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+      const currentTime = new Date(istTime);
+      const currentHour = currentTime.getHours();
       const resultsHour = election.resultsTime ? parseInt(election.resultsTime.split(':')[0]) : 18;
       
       if (currentHour < resultsHour) {
