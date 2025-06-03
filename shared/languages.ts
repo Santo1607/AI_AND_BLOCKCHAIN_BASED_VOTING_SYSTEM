@@ -139,6 +139,20 @@ export const translations = {
     'ongoing': 'Ongoing',
     'completed': 'Completed',
     
+    // Voting completion translations
+    'voteCastSuccessfully': 'Vote Cast Successfully!',
+    'thankYouParticipating': 'Thank you for participating in the democratic process',
+    'voteCertificate': 'Digital Vote Certificate',
+    'voteId': 'Vote ID',
+    'voteStatus': 'Vote Status',
+    'successfullyRecorded': 'Successfully Recorded',
+    'timestamp': 'Timestamp',
+    'important': 'Important',
+    'voteRecordedMessage': 'Your vote has been permanently recorded. This certificate serves as proof of your participation in the democratic process.',
+    'votingComplete': 'Voting Complete',
+    'votingCompleteMessage': 'Your vote has been cast and cannot be changed. The voting process is complete and secure. Results will be available to election officials at 6:00 PM.',
+    'returnToPortal': 'Return to Portal',
+    
     // Results
     'electionResults': 'Election Results',
     'totalVotes': 'Total Votes',
@@ -338,6 +352,53 @@ export const translations = {
     'votingClosed': 'ఓటింగ్ ప్రస్తుతం మూసివేయబడింది',
     'publicPortal': 'పబ్లిక్ పోర్టల్',
     'adminPortal': 'అడ్మిన్ పోర్టల్'
+  },
+
+  // Tamil translations
+  ta: {
+    'welcome': 'வரவேற்கிறோம்',
+    'login': 'உள்நுழைய',
+    'logout': 'வெளியேற',
+    'digitalVotingSystem': 'டிஜிட்டல் வாக்களிப்பு அமைப்பு',
+    'votingPlatformDescription': 'ஆதார் சரிபார்ப்பால் இயக்கப்படும் பாதுகாப்பான, வெளிப்படையான மற்றும் அணுகக்கூடிய வாக்களிப்பு தளம். நம்பிக்கை மற்றும் வசதியுடன் உங்கள் ஜனநாயக உரிமையைப் பயன்படுத்துங்கள்.',
+    'digitalVotingPortal': 'டிஜிட்டல் வாக்களிப்பு இணையதளம்',
+    'governmentOfIndia': 'இந்திய அரசு - தேர்தல் ஆணையம்',
+    'electionSchedule': 'தேர்தல் கால அட்டவணை',
+    'currentTime': 'தற்போதைய நேரம்',
+    'votingActive': 'வாக்களிப்பு செயலில்',
+    'votingClosedStatus': 'வாக்களிப்பு மூடப்பட்டது',
+    'voterRegistrationTitle': 'வாக்காளர் பதிவு',
+    'voterRegistrationDesc': 'ஆதார் சரிபார்ப்புடன் வாக்காளராக பதிவு செய்யுங்கள்',
+    'castVoteTitle': 'உங்கள் வாக்கைப் போடுங்கள்',
+    'castVoteDesc': 'பாதுகாப்பான பிளாக்செயின்-இயக்கப்படும் வாக்களிப்பு செயல்முறை',
+    'viewResultsTitle': 'முடிவுகளைப் பார்க்கவும்',
+    'viewResultsDesc': 'நிகழ்நேர தேர்தல் முடிவுகள் மற்றும் பகுப்பாய்வு',
+    'secureVotingProcess': 'பாதுகாப்பான வாக்களிப்பு செயல்முறை',
+    'votingSystemDescription': 'எங்கள் வாக்களிப்பு அமைப்பு மேம்பட்ட குறியாக்கம் மற்றும் ஆதார் அடிப்படையிலான சரிபார்ப்பைப் பயன்படுத்துகிறது.',
+    'aadharIntegration': 'ஆதார் ஒருங்கிணைப்பு',
+    'aadharIntegrationDesc': 'உடனடி வாக்காளர் சரிபார்ப்புக்கான ஆதார் மேலாண்மை அமைப்புடன் தடையின்றி ஒருங்கிணைக்கப்பட்டது.',
+    'currentElectionTitle': 'பொதுத் தேர்தல் 2024 - இப்போது செயலில்',
+    'currentElectionDescription': 'தேசிய நாடாளுமன்றத் தேர்தல்கள் தற்போது வாக்களிப்புக்காக திறந்துள்ளன. நமது நாட்டின் எதிர்காலத்தை வடிவமைப்பதில் உங்கள் குரலைக் கேட்கச் செய்யுங்கள்.',
+    'voteNow': 'இப்போது வாக்களியுங்கள்',
+    'registerToVote': 'வாக்களிக்க பதிவு செய்யுங்கள்',
+    'viewLiveResults': 'நேரடி முடிவுகளைப் பார்க்கவும்',
+    'votingClosed': 'வாக்களிப்பு தற்போது மூடப்பட்டுள்ளது',
+    'publicPortal': 'பொது இணையதளம்',
+    'adminPortal': 'நிர்வாக இணையதளம்',
+    
+    // Voting completion translations in Tamil
+    'voteCastSuccessfully': 'வாக்கு வெற்றிகரமாக பதிவு செய்யப்பட்டது!',
+    'thankYouParticipating': 'ஜனநாயக செயல்முறையில் பங்கேற்றதற்கு நன்றி',
+    'voteCertificate': 'டிஜிட்டல் வாக்கு சான்றிதழ்',
+    'voteId': 'வாக்கு அடையாள எண்',
+    'voteStatus': 'வாக்கு நிலை',
+    'successfullyRecorded': 'வெற்றிகரமாக பதிவு செய்யப்பட்டது',
+    'timestamp': 'நேர முத்திரை',
+    'important': 'முக்கியம்',
+    'voteRecordedMessage': 'உங்கள் வாக்கு நிரந்தரமாக பதிவு செய்யப்பட்டுள்ளது. இந்த சான்றிதழ் ஜனநாயக செயல்முறையில் உங்கள் பங்கேற்பின் ஆதாரமாக செயல்படுகிறது.',
+    'votingComplete': 'வாக்களிப்பு முடிந்தது',
+    'votingCompleteMessage': 'உங்கள் வாக்கு பதிவு செய்யப்பட்டு மாற்ற முடியாது. வாக்களிப்பு செயல்முறை முடிந்து பாதுகாப்பானது. முடிவுகள் மாலை 6:00 மணிக்கு தேர்தல் அதிகாரிகளுக்கு கிடைக்கும்.',
+    'returnToPortal': 'இணையதளத்திற்கு திரும்பு'
   }
 };
 

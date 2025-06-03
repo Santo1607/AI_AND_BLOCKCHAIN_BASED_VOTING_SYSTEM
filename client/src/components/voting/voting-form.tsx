@@ -264,19 +264,17 @@ export function VotingForm({ onBack }: VotingFormProps) {
                   
                   <div className="grid grid-cols-1 gap-4 text-left">
                     <div className="bg-white p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-600">Vote ID</p>
+                      <p className="text-sm font-medium text-gray-600">{t('voteId')}</p>
                       <p className="text-lg font-mono text-gray-900">#{voteReceipt.voteId}</p>
                     </div>
                     
                     <div className="bg-white p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-600">Vote Status</p>
-                      <p className="text-lg text-green-600 font-semibold">Successfully Recorded</p>
+                      <p className="text-sm font-medium text-gray-600">{t('voteStatus')}</p>
+                      <p className="text-lg text-green-600 font-semibold">{t('successfullyRecorded')}</p>
                     </div>
                     
-
-                    
                     <div className="bg-white p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-600">Timestamp</p>
+                      <p className="text-sm font-medium text-gray-600">{t('timestamp')}</p>
                       <p className="text-lg text-gray-900">
                         {new Date(voteReceipt.timestamp).toLocaleString('en-IN')}
                       </p>
@@ -285,18 +283,16 @@ export function VotingForm({ onBack }: VotingFormProps) {
                   
                   <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
                     <p className="text-sm text-green-800">
-                      <strong>Important:</strong> Your vote has been permanently recorded on the blockchain. 
-                      This certificate serves as proof of your participation in the democratic process.
+                      <strong>{t('important')}:</strong> {t('voteRecordedMessage')}
                     </p>
                   </div>
                 </div>
               )}
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                <h3 className="font-semibold text-blue-900 mb-2">Voting Complete</h3>
+                <h3 className="font-semibold text-blue-900 mb-2">{t('votingComplete')}</h3>
                 <p className="text-sm text-blue-800">
-                  Your vote has been cast and cannot be changed. The voting process is complete and secure. 
-                  Results will be available to election officials at 6:00 PM.
+                  {t('votingCompleteMessage')}
                 </p>
               </div>
 
@@ -304,7 +300,7 @@ export function VotingForm({ onBack }: VotingFormProps) {
                 className="w-full bg-green-600 hover:bg-green-700"
                 onClick={onBack}
               >
-                Return to Portal
+                {t('returnToPortal')}
               </Button>
             </CardContent>
           </Card>
