@@ -267,8 +267,8 @@ export function VotingForm({ onBack }: VotingFormProps) {
                     </div>
                     
                     <div className="bg-white p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-600">Selected Candidate</p>
-                      <p className="text-lg text-gray-900">{voteReceipt.candidateName}</p>
+                      <p className="text-sm font-medium text-gray-600">Vote Status</p>
+                      <p className="text-lg text-green-600 font-semibold">Successfully Recorded</p>
                     </div>
                     
                     <div className="bg-white p-4 rounded-lg">
