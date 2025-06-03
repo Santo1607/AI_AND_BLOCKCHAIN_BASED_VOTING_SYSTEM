@@ -323,13 +323,19 @@ export class DatabaseStorage implements IStorage {
     return candidate || undefined;
   }
 
-  async createCandidate(insertCandidate: InsertCandidate): Promise<Candidate> {
+  async createCandidate(candidateData: any): Promise<Candidate> {
     const now = new Date().toISOString();
     const [candidate] = await db
       .insert(candidates)
       .values({
-        ...insertCandidate,
-        createdAt: now
+        name: candidateData.name,
+        party: candidateData.party,
+        constituency: candidateData.constituency,
+        symbol: candidateData.symbol,
+        manifesto: candidateData.manifesto,
+        electionId: candidateData.electionId,
+        photoUrl: candidateData.photoUrl,
+        createdAt: candidateData.createdAt || now
       })
       .returning();
     return candidate;
