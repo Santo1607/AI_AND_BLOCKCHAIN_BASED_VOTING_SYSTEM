@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
+import { insertCandidateSchema } from "@shared/schema";
 
 // Extend session type to include adminId
 declare module "express-session" {
@@ -474,7 +475,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const candidateData = {
+      // Parse and validate the data
+      const candidateData = insertCandidateSchema.parse({
         name: req.body.name,
         party: req.body.party,
         constituency: req.body.constituency,
@@ -482,16 +484,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         manifesto: req.body.manifesto || null,
         electionId: parseInt(req.body.electionId) || 1,
         photoUrl: req.file ? `/uploads/${req.file.filename}` : null
-      };
-
-      // Validate required fields
-      if (!candidateData.name || !candidateData.party || !candidateData.constituency || !candidateData.symbol) {
-        return res.status(400).json({ message: "Name, party, constituency, and symbol are required" });
-      }
+      });
 
       const candidate = await storage.createCandidate(candidateData);
       res.json(candidate);
     } catch (error: any) {
+      console.error('Candidate creation error:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: error.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') });
+      }
       res.status(400).json({ message: error.message });
     }
   });
