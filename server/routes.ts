@@ -313,20 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/candidates", async (req, res) => {
-    const adminId = (req as any).session?.adminId;
-    if (!adminId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    try {
-      const candidateData = insertCandidateSchema.parse(req.body);
-      const candidate = await storage.createCandidate(candidateData);
-      res.status(201).json(candidate);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
+  // This route is handled below with file upload support
 
   // Voter registration
   app.post("/api/voter/register", async (req, res) => {

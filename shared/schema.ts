@@ -105,7 +105,8 @@ export const insertElectionSchema = createInsertSchema(elections).omit({
 
 export const insertCandidateSchema = createInsertSchema(candidates).omit({
   id: true,
-  createdAt: true,
+}).extend({
+  createdAt: z.string().optional(),
 });
 
 export const voteSchema = z.object({
