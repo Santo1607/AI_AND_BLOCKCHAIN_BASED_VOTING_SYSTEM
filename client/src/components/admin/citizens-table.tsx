@@ -467,14 +467,21 @@ export function CitizensTable() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setEditingCitizen(null)}>
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEditingCitizen(null)}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                >
                   Cancel
                 </Button>
-                <Button onClick={() => {
-                  toast({ title: "Update Successful", description: "Citizen record updated successfully" });
-                  setEditingCitizen(null);
-                }}>
+                <Button 
+                  onClick={() => {
+                    toast({ title: "Update Successful", description: "Citizen record updated successfully" });
+                    setEditingCitizen(null);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                >
                   Save Changes
                 </Button>
               </div>
