@@ -29,7 +29,9 @@ export default function VotingPortal() {
 
   useEffect(() => {
     const updateTime = () => {
-      const now = new Date();
+      // Use Indian Standard Time (IST)
+      const istTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+      const now = new Date(istTime);
       setCurrentTime(now);
       
       const activeElection = elections?.[0];
