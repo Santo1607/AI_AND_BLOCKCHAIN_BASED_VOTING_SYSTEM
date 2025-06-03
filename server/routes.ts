@@ -203,35 +203,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/verify", async (req, res) => {
     try {
       const verificationData = verificationSchema.parse(req.body);
-      const citizen = await storage.verifyCitizen(
-        verificationData.aadharNumber,
-        verificationData.dateOfBirth
-      );
       
-      if (citizen) {
-        // Return citizen data without sensitive info
-        res.json({
-          success: true,
-          citizen: {
-            name: citizen.name,
-            aadharNumber: citizen.aadharNumber,
-            dateOfBirth: citizen.dateOfBirth,
-            gender: citizen.gender,
-            address: citizen.address,
-            district: citizen.district,
-            constituency: citizen.constituency,
-            pincode: citizen.pincode,
-            photoUrl: citizen.photoUrl,
-            fingerprintData: citizen.fingerprintData,
-            status: citizen.status
-          }
-        });
-      } else {
-        res.status(404).json({ 
+      // First check if Aadhar number exists in database
+      const citizen = await storage.getCitizenByAadhar(verificationData.aadharNumber);
+      
+      if (!citizen) {
+        return res.status(404).json({ 
           success: false, 
-          message: "No matching record found. Please check your details." 
+          message: "Aadhar number not found in our records. Please contact admin to register first." 
         });
       }
+      
+      // Check if the entered date of birth matches the registered record
+      if (citizen.dateOfBirth !== verificationData.dateOfBirth) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Date of birth does not match our records. Please enter the correct date of birth." 
+        });
+      }
+      
+      // Calculate age to check 18+ requirement
+      const birthDate = new Date(verificationData.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      if (age < 18) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "You must be 18 years or older to access this portal. Current age: " + age + " years." 
+        });
+      }
+      
+      // Verification successful - return citizen data without sensitive info
+      res.json({
+        success: true,
+        citizen: {
+          name: citizen.name,
+          aadharNumber: citizen.aadharNumber,
+          dateOfBirth: citizen.dateOfBirth,
+          gender: citizen.gender,
+          address: citizen.address,
+          district: citizen.district,
+          constituency: citizen.constituency,
+          pincode: citizen.pincode,
+          photoUrl: citizen.photoUrl,
+          fingerprintData: citizen.fingerprintData,
+          status: citizen.status,
+          age: age
+        }
+      });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
     }
