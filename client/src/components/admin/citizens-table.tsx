@@ -310,8 +310,8 @@ export function CitizensTable() {
                   <p className="text-sm">{viewingCitizen.address}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Phone</Label>
-                  <p className="text-sm">{viewingCitizen.phoneNumber}</p>
+                  <Label className="text-sm font-medium">Pincode</Label>
+                  <p className="text-sm">{viewingCitizen.pincode}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Status</Label>
@@ -336,27 +336,111 @@ export function CitizensTable() {
 
       {/* Edit Citizen Dialog */}
       <Dialog open={!!editingCitizen} onOpenChange={() => setEditingCitizen(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Citizen</DialogTitle>
+            <DialogTitle>Edit Citizen Details</DialogTitle>
           </DialogHeader>
           {editingCitizen && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-name">Name</Label>
+                  <Label htmlFor="edit-name">Full Name</Label>
                   <Input id="edit-name" defaultValue={editingCitizen.name} />
                 </div>
                 <div>
-                  <Label htmlFor="edit-phone">Phone Number</Label>
-                  <Input id="edit-phone" defaultValue={editingCitizen.phoneNumber} />
+                  <Label htmlFor="edit-aadhar">Aadhar Number</Label>
+                  <Input id="edit-aadhar" defaultValue={editingCitizen.aadharNumber} disabled />
                 </div>
               </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-dob">Date of Birth</Label>
+                  <Input id="edit-dob" type="date" defaultValue={editingCitizen.dateOfBirth} />
+                </div>
+                <div>
+                  <Label htmlFor="edit-gender">Gender</Label>
+                  <Select defaultValue={editingCitizen.gender}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-pincode">Pincode</Label>
+                  <Input id="edit-pincode" defaultValue={editingCitizen.pincode} />
+                </div>
+                <div>
+                  <Label htmlFor="edit-district">District</Label>
+                  <Select defaultValue={editingCitizen.district}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Central Delhi">Central Delhi</SelectItem>
+                      <SelectItem value="East Delhi">East Delhi</SelectItem>
+                      <SelectItem value="North Delhi">North Delhi</SelectItem>
+                      <SelectItem value="South Delhi">South Delhi</SelectItem>
+                      <SelectItem value="West Delhi">West Delhi</SelectItem>
+                      <SelectItem value="Mumbai">Mumbai</SelectItem>
+                      <SelectItem value="Bangalore">Bangalore</SelectItem>
+                      <SelectItem value="Chennai">Chennai</SelectItem>
+                      <SelectItem value="Coimbatore">Coimbatore</SelectItem>
+                      <SelectItem value="Kolkata">Kolkata</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div>
-                <Label htmlFor="edit-address">Address</Label>
+                <Label htmlFor="edit-address">Full Address</Label>
                 <Input id="edit-address" defaultValue={editingCitizen.address} />
               </div>
-              <div className="flex justify-end space-x-2">
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-constituency">Constituency</Label>
+                  <Select defaultValue={editingCitizen.constituency}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Central Delhi">Central Delhi</SelectItem>
+                      <SelectItem value="East Delhi">East Delhi</SelectItem>
+                      <SelectItem value="North Delhi">North Delhi</SelectItem>
+                      <SelectItem value="South Delhi">South Delhi</SelectItem>
+                      <SelectItem value="West Delhi">West Delhi</SelectItem>
+                      <SelectItem value="Mumbai North">Mumbai North</SelectItem>
+                      <SelectItem value="Mumbai South">Mumbai South</SelectItem>
+                      <SelectItem value="Bangalore North">Bangalore North</SelectItem>
+                      <SelectItem value="Bangalore South">Bangalore South</SelectItem>
+                      <SelectItem value="Chennai Central">Chennai Central</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select defaultValue={editingCitizen.status}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button variant="outline" onClick={() => setEditingCitizen(null)}>
                   Cancel
                 </Button>
