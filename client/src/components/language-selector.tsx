@@ -34,12 +34,12 @@ export function LanguageSelectorButton() {
 
   return (
     <Select value={currentLanguage} onValueChange={setLanguage}>
-      <SelectTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+      <SelectTrigger className="w-40">
+        <div className="flex items-center gap-2">
           <Globe className="w-4 h-4" />
           <span className="hidden sm:inline">{currentLang?.nativeName}</span>
           <span className="sm:hidden">{currentLang?.code.toUpperCase()}</span>
-        </Button>
+        </div>
       </SelectTrigger>
       <SelectContent align="end">
         {languages.map((lang) => (
