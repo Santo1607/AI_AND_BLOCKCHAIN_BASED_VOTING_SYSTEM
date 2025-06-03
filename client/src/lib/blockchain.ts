@@ -27,6 +27,9 @@ export class VotingBlockchain {
       // Use local blockchain simulation for development
       // This simulates blockchain properties without requiring external services
       console.log('Initializing blockchain simulation for vote integrity');
+      
+      // Don't attempt to connect to external providers in development
+      // All blockchain operations will use local simulation
     } catch (error) {
       console.warn('Blockchain initialization failed:', error);
     }
