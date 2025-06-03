@@ -199,6 +199,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if date of birth exists in database (for age verification)
+  app.post("/api/check-dob", async (req, res) => {
+    try {
+      const { dateOfBirth } = req.body;
+      
+      if (!dateOfBirth) {
+        return res.status(400).json({ 
+          exists: false, 
+          message: "Date of birth is required" 
+        });
+      }
+      
+      // Check if any citizen has this date of birth
+      const allCitizens = await storage.getAllCitizens();
+      const citizenExists = allCitizens.some(citizen => citizen.dateOfBirth === dateOfBirth);
+      
+      res.json({ 
+        exists: citizenExists,
+        message: citizenExists 
+          ? "Date of birth found in records" 
+          : "Date of birth not found in our records"
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        exists: false, 
+        message: error.message 
+      });
+    }
+  });
+
   // Public verification
   app.post("/api/verify", async (req, res) => {
     try {

@@ -24,13 +24,37 @@ export function AgeVerification({ onVerified, requiredAge = 18, title }: AgeVeri
     message: string;
   } | null>(null);
 
-  const handleVerification = () => {
+  const handleVerification = async () => {
     if (!dateOfBirth) return;
 
     setIsVerifying(true);
     
-    // Simulate verification delay for better UX
-    setTimeout(() => {
+    try {
+      // Check if this date of birth exists in the Aadhar database
+      const response = await fetch('/api/check-dob', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ dateOfBirth }),
+      });
+      
+      const dobCheckResult = await response.json();
+      
+      if (!dobCheckResult.exists) {
+        const result = {
+          isEligible: false,
+          age: 0,
+          message: "Date of birth not found in our records. Please contact admin to register first."
+        };
+        
+        setVerificationResult(result);
+        setIsVerifying(false);
+        onVerified(false, 0);
+        return;
+      }
+      
+      // If DOB exists, calculate age and check 18+ requirement
       const age = calculateAge(dateOfBirth);
       const isEligible = age >= requiredAge;
       
@@ -45,7 +69,17 @@ export function AgeVerification({ onVerified, requiredAge = 18, title }: AgeVeri
       setVerificationResult(result);
       setIsVerifying(false);
       onVerified(isEligible, age);
-    }, 1500);
+    } catch (error) {
+      const result = {
+        isEligible: false,
+        age: 0,
+        message: "Error verifying date of birth. Please try again."
+      };
+      
+      setVerificationResult(result);
+      setIsVerifying(false);
+      onVerified(false, 0);
+    }
   };
 
   const maxDate = new Date();
