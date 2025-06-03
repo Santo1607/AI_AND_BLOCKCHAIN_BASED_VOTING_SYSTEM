@@ -162,7 +162,8 @@ export function VotingForm({ onBack }: VotingFormProps) {
         candidateId: selectedCandidate,
         voterAadhar: voterData.aadharNumber,
         blockchainHash: blockchainResult.voteHash,
-        transactionHash: blockchainResult.transactionHash
+        transactionHash: blockchainResult.transactionHash,
+        clientTime: new Date().toISOString() // Send client's local time
       });
       
       const result = await response.json();

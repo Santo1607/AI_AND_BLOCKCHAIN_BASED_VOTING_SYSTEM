@@ -370,9 +370,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get election timing settings
       const election = await storage.getElection(1); // Active election
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
+      
+      // Use client-provided timezone or local time from request
+      const clientTime = req.body.clientTime ? new Date(req.body.clientTime) : new Date();
+      const currentHour = clientTime.getHours();
+      const currentMinute = clientTime.getMinutes();
       const currentTimeInMinutes = currentHour * 60 + currentMinute;
       
       // Parse election timing
