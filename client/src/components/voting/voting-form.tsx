@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { verificationSchema, type VerificationData, type Election, type Candidate } from "@shared/schema";
 import { EnhancedBiometricVerification } from "./enhanced-biometric-verification";
 import { votingBlockchain } from "@/lib/blockchain";
+import { useLanguage } from "@/hooks/use-language";
 import { Vote, IdCard, Calendar, ArrowLeft, CheckCircle, AlertCircle, User } from "lucide-react";
 
 interface VotingFormProps {
@@ -32,6 +33,7 @@ export function VotingForm({ onBack }: VotingFormProps) {
     voteId: number;
   } | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const form = useForm<VerificationData>({
     resolver: zodResolver(verificationSchema),
@@ -229,8 +231,8 @@ export function VotingForm({ onBack }: VotingFormProps) {
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-10 h-10 text-green-600" />
               </div>
-              <CardTitle className="text-3xl font-bold text-gray-900">Vote Cast Successfully!</CardTitle>
-              <p className="text-gray-600 mt-4">Thank you for participating in the democratic process</p>
+              <CardTitle className="text-3xl font-bold text-gray-900">{t('voteCastSuccessfully')}</CardTitle>
+              <p className="text-gray-600 mt-4">{t('thankYouParticipating')}</p>
             </CardHeader>
 
             <CardContent className="text-center">
@@ -257,7 +259,7 @@ export function VotingForm({ onBack }: VotingFormProps) {
                 <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-6 mb-8">
                   <h3 className="font-semibold text-gray-900 mb-4 flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                    Digital Vote Certificate
+                    {t('voteCertificate')}
                   </h3>
                   
                   <div className="grid grid-cols-1 gap-4 text-left">
@@ -271,19 +273,7 @@ export function VotingForm({ onBack }: VotingFormProps) {
                       <p className="text-lg text-green-600 font-semibold">Successfully Recorded</p>
                     </div>
                     
-                    <div className="bg-white p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-600">Blockchain Hash</p>
-                      <p className="text-sm font-mono text-gray-900 break-all">
-                        {voteReceipt.blockchainHash}
-                      </p>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-600">Transaction Hash</p>
-                      <p className="text-sm font-mono text-gray-900 break-all">
-                        {voteReceipt.transactionHash}
-                      </p>
-                    </div>
+
                     
                     <div className="bg-white p-4 rounded-lg">
                       <p className="text-sm font-medium text-gray-600">Timestamp</p>
