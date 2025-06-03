@@ -4,12 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VerificationForm } from "@/components/public/verification-form";
 import { VerificationResult } from "@/components/public/verification-result";
-import { Shield, Search, Clock, Headphones, ArrowRight } from "lucide-react";
+import { AgeVerification } from "@/components/age-verification";
+import { LanguageSelectorButton } from "@/components/language-selector";
+import { SecurityChallenge } from "@/components/recaptcha";
+import { useLanguage } from "@/hooks/use-language";
+import { Shield, Search, Clock, Headphones, ArrowRight, Globe } from "lucide-react";
 import type { Citizen } from "@shared/schema";
 
 export default function PublicPortal() {
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const [verificationResult, setVerificationResult] = useState<Citizen | null>(null);
+  const [ageVerified, setAgeVerified] = useState<boolean>(false);
+  const [securityVerified, setSecurityVerified] = useState<boolean>(false);
+  const [showAgeVerification, setShowAgeVerification] = useState<boolean>(true);
 
   const handleVerificationSuccess = (citizen: Citizen) => {
     setVerificationResult(citizen);
@@ -17,6 +25,22 @@ export default function PublicPortal() {
 
   const handleNewSearch = () => {
     setVerificationResult(null);
+  };
+
+  const handleAgeVerification = (isEligible: boolean, age: number) => {
+    if (isEligible) {
+      setAgeVerified(true);
+      setShowAgeVerification(false);
+    } else {
+      setTimeout(() => {
+        setShowAgeVerification(true);
+        setAgeVerified(false);
+      }, 3000);
+    }
+  };
+
+  const handleSecurityVerification = (isVerified: boolean) => {
+    setSecurityVerified(isVerified);
   };
 
   return (
@@ -35,20 +59,21 @@ export default function PublicPortal() {
               </div>
             </div>
             
-            <div className="flex space-x-4">
+            <div className="flex items-center space-x-4">
+              <LanguageSelectorButton />
               <Button 
                 variant="outline"
                 onClick={() => setLocation("/voting")}
                 className="text-green-600 border-green-200 hover:bg-green-50"
               >
-                Voting Portal
+                {t('votingPortal')}
               </Button>
               <Button 
                 variant="outline"
                 onClick={() => setLocation("/admin")}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
               >
-                Admin Portal
+                {t('adminPortal')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -62,18 +87,38 @@ export default function PublicPortal() {
           <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Search className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Public Verification Portal</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t('publicPortal')} {t('aadharVerification')}</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Verify your Aadhar registration details quickly and securely with our government database
+            {t('verifyAadhar')} - {t('ageRequirement')}
           </p>
         </div>
 
+        {/* Age Verification Step */}
+        {showAgeVerification && !ageVerified && (
+          <div className="flex justify-center mb-8">
+            <AgeVerification 
+              onVerified={handleAgeVerification}
+              title={t('ageVerificationRequired')}
+            />
+          </div>
+        )}
+
+        {/* Security Challenge Step */}
+        {ageVerified && !securityVerified && (
+          <div className="flex justify-center mb-8">
+            <SecurityChallenge 
+              onVerified={handleSecurityVerification}
+              size="normal"
+            />
+          </div>
+        )}
+
         {/* Verification Form */}
-        {!verificationResult && (
+        {ageVerified && securityVerified && !verificationResult && (
           <Card className="shadow-xl border-0 mb-8">
             <CardHeader>
               <CardTitle className="text-2xl font-semibold text-gray-900 text-center">
-                Verify Your Details
+                {t('verifyAadhar')}
               </CardTitle>
             </CardHeader>
             <CardContent>

@@ -8,11 +8,16 @@ import { VoterRegistrationForm } from "@/components/voting/voter-registration-fo
 import { VotingForm } from "@/components/voting/voting-form";
 import { ElectionResults } from "@/components/voting/election-results";
 import { BiometricVerification } from "@/components/voting/biometric-verification";
-import { Vote, Users, TrendingUp, ArrowRight, Clock, AlertCircle } from "lucide-react";
+import { AgeVerification } from "@/components/age-verification";
+import { LanguageSelectorButton } from "@/components/language-selector";
+import { SecurityChallenge } from "@/components/recaptcha";
+import { useLanguage } from "@/hooks/use-language";
+import { Vote, Users, TrendingUp, ArrowRight, Clock, AlertCircle, Globe, Shield } from "lucide-react";
 
 type VotingSection = "register" | "vote" | "results";
 
 export default function VotingPortal() {
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const [currentSection, setCurrentSection] = useState<VotingSection | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -21,6 +26,9 @@ export default function VotingPortal() {
     canViewResults: false,
     message: ""
   });
+  const [ageVerified, setAgeVerified] = useState<boolean>(false);
+  const [securityVerified, setSecurityVerified] = useState<boolean>(false);
+  const [showAgeVerification, setShowAgeVerification] = useState<boolean>(true);
 
   const { data: elections } = useQuery({
     queryKey: ['/api/elections'],
