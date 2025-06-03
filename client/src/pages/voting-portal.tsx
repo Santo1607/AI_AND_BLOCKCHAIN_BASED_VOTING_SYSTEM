@@ -125,7 +125,8 @@ export default function VotingPortal() {
               </div>
             </div>
             
-            <div className="flex space-x-4">
+            <div className="flex items-center space-x-4">
+              <LanguageSelectorButton />
               <Button 
                 variant="outline"
                 onClick={() => setLocation("/public")}

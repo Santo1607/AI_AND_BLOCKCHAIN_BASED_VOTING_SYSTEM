@@ -6,16 +6,19 @@ import { CitizensTable } from "@/components/admin/citizens-table";
 import { CitizenForm } from "@/components/admin/citizen-form";
 import { CandidateManagement } from "@/components/admin/candidate-management";
 import { ElectionManagement } from "@/components/admin/election-management";
+import { LanguageSelectorButton } from "@/components/language-selector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { apiRequest } from "@/lib/queryClient";
 import { Shield, LogOut, FileBarChart, Download, Calendar } from "lucide-react";
 
 type AdminSection = "overview" | "citizens" | "add-citizen" | "candidates" | "elections" | "reports";
 
 export default function AdminDashboard() {
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const [currentSection, setCurrentSection] = useState<AdminSection>("overview");
   const { toast } = useToast();
@@ -262,11 +265,12 @@ export default function AdminDashboard() {
             </div>
             
             <div className="flex items-center space-x-4">
+              <LanguageSelectorButton />
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                   <Shield className="w-4 h-4" />
                 </div>
-                <span>Welcome, {admin.name}</span>
+                <span>{t('welcome')}, {admin.name}</span>
               </div>
               <Button 
                 variant="outline"
@@ -275,7 +279,7 @@ export default function AdminDashboard() {
                 className="text-red-600 border-red-200 hover:bg-red-50"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                {t('logout')}
               </Button>
             </div>
           </div>
