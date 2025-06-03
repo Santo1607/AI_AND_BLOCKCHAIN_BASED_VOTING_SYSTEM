@@ -81,14 +81,9 @@ export class VotingBlockchain {
         // Simulate blockchain storage for development
         const localVotes = this.getLocalVotes();
         
-        if (localVotes[voterHash]) {
-          return {
-            success: false,
-            voteHash,
-            error: "Vote already cast (local simulation)"
-          };
-        }
-
+        // Don't check for duplicates here - let the database handle vote validation
+        // This allows the server to properly manage vote tracking
+        
         // Store vote locally with blockchain-like properties
         localVotes[voterHash] = {
           candidateId,
@@ -182,6 +177,13 @@ export class VotingBlockchain {
   private setLocalVotes(votes: Record<string, any>): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem('blockchain_votes', JSON.stringify(votes));
+  }
+
+  // Clear local blockchain storage (for testing/admin purposes)
+  clearLocalVotes(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('blockchain_votes');
+    console.log('Local blockchain votes cleared');
   }
 
   // Generate vote certificate with blockchain proof
