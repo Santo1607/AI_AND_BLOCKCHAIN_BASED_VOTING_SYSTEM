@@ -56,7 +56,10 @@ function CandidateForm({ candidate, onSuccess, onCancel }: CandidateFormProps) {
         method: 'POST',
         body: formData
       });
-      if (!response.ok) throw new Error('Failed to create candidate');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create candidate');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -64,8 +67,10 @@ function CandidateForm({ candidate, onSuccess, onCancel }: CandidateFormProps) {
       toast({ title: 'Success', description: 'Candidate created successfully' });
       onSuccess();
     },
-    onError: (error) => {
-      toast({ title: 'Error', description: 'Failed to create candidate', variant: 'destructive' });
+    onError: (error: any) => {
+      console.error('Candidate creation error:', error);
+      const errorMessage = error.message || 'Failed to create candidate';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   });
 
