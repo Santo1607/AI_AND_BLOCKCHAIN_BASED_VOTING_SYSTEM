@@ -245,12 +245,11 @@ export default function VotingPortal() {
                     : "text-gray-400"
                 }`} />
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Cast Your Vote</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t('castVoteTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-gray-600 mb-6">
-                Vote securely in active elections. Your vote is encrypted and anonymous, 
-                ensuring complete privacy and transparency.
+                {t('castVoteDesc')}
               </p>
               <Button 
                 className={`w-full ${
@@ -260,7 +259,7 @@ export default function VotingPortal() {
                 }`}
                 disabled={!votingStatus.isVotingTime}
               >
-                {votingStatus.isVotingTime ? "Vote Now" : "Voting Closed"}
+                {votingStatus.isVotingTime ? t('voteNow') : t('votingClosed')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
@@ -278,11 +277,9 @@ export default function VotingPortal() {
                   <Vote className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-2">Secure Voting Process</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('secureVotingProcess')}</h4>
                   <p className="text-sm text-blue-800">
-                    Our voting system uses advanced encryption and Aadhar-based verification to ensure 
-                    your vote is secure, anonymous, and counted accurately. Each vote is cryptographically 
-                    protected and linked to verified citizen identity.
+                    {t('votingSystemDescription')}
                   </p>
                 </div>
               </div>
@@ -296,10 +293,9 @@ export default function VotingPortal() {
                   <Users className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-2">Aadhar Integration</h4>
+                  <h4 className="font-semibold text-green-900 mb-2">{t('aadharIntegration')}</h4>
                   <p className="text-sm text-green-800">
-                    Seamlessly integrated with the Aadhar management system for instant voter verification. 
-                    Your existing Aadhar registration serves as the foundation for secure democratic participation.
+                    {t('aadharIntegrationDesc')}
                   </p>
                 </div>
               </div>

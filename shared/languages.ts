@@ -78,6 +78,10 @@ export const translations = {
     'castVoteDesc': 'Secure blockchain-enabled voting process',
     'viewResultsTitle': 'View Results',
     'viewResultsDesc': 'Real-time election results and analytics',
+    'secureVotingProcess': 'Secure Voting Process',
+    'votingSystemDescription': 'Our voting system uses advanced encryption and Aadhar-based verification to ensure your vote is secure, anonymous, and counted accurately. Each vote is cryptographically protected and linked to verified citizen identity.',
+    'aadharIntegration': 'Aadhar Integration',
+    'aadharIntegrationDesc': 'Seamlessly integrated with the Aadhar management system for instant voter verification. Your existing Aadhar registration serves as the foundation for secure democratic participation.',
     
     // Admin Portal
     'adminLogin': 'Admin Login',
@@ -190,6 +194,10 @@ export const translations = {
     'castVoteDesc': 'सुरक्षित ब्लॉकचेन-सक्षम मतदान प्रक्रिया',
     'viewResultsTitle': 'परिणाम देखें',
     'viewResultsDesc': 'वास्तविक समय चुनाव परिणाम और विश्लेषण',
+    'secureVotingProcess': 'सुरक्षित मतदान प्रक्रिया',
+    'votingSystemDescription': 'हमारी मतदान प्रणाली उन्नत एन्क्रिप्शन और आधार-आधारित सत्यापन का उपयोग करती है ताकि आपका मत सुरक्षित, गुमनाम और सटीक रूप से गिना जा सके। प्रत्येक मत क्रिप्टोग्राफिक रूप से सुरक्षित है और सत्यापित नागरिक पहचान से जुड़ा है।',
+    'aadharIntegration': 'आधार एकीकरण',
+    'aadharIntegrationDesc': 'तत्काल मतदाता सत्यापन के लिए आधार प्रबंधन प्रणाली के साथ निर्बाध रूप से एकीकृत। आपका मौजूदा आधार पंजीकरण सुरक्षित लोकतांत्रिक भागीदारी की नींव के रूप में कार्य करता है।',
     
     // Admin Portal
     'adminLogin': 'प्रशासक लॉगिन',
