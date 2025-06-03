@@ -272,9 +272,73 @@ export const translations = {
     // Language Selection
     'selectLanguage': 'भाषा चुनें',
     'languageChanged': 'भाषा सफलतापूर्वक बदली गई'
-  }
+  },
   
-  // Additional languages can be added here following the same pattern
+  // Bengali translations
+  bn: {
+    'welcome': 'স্বাগতম',
+    'login': 'লগইন',
+    'logout': 'লগআউট',
+    'digitalVotingSystem': 'ডিজিটাল ভোটিং সিস্টেম',
+    'votingPlatformDescription': 'আধার যাচাইকরণ দ্বারা চালিত নিরাপদ, স্বচ্ছ এবং অ্যাক্সেসযোগ্য ভোটিং প্ল্যাটফর্ম। আত্মবিশ্বাস এবং সুবিধার সাথে আপনার গণতান্ত্রিক অধিকার প্রয়োগ করুন।',
+    'digitalVotingPortal': 'ডিজিটাল ভোটিং পোর্টাল',
+    'governmentOfIndia': 'ভারত সরকার - নির্বাচন কমিশন',
+    'electionSchedule': 'নির্বাচনের সময়সূচী',
+    'currentTime': 'বর্তমান সময়',
+    'votingActive': 'ভোটিং সক্রিয়',
+    'votingClosedStatus': 'ভোটিং বন্ধ',
+    'voterRegistrationTitle': 'ভোটার নিবন্ধন',
+    'voterRegistrationDesc': 'আধার যাচাইকরণের সাথে ভোটার হিসেবে নিবন্ধন করুন',
+    'castVoteTitle': 'আপনার ভোট দিন',
+    'castVoteDesc': 'নিরাপদ ব্লকচেইন-সক্ষম ভোটিং প্রক্রিয়া',
+    'viewResultsTitle': 'ফলাফল দেখুন',
+    'viewResultsDesc': 'রিয়েল-টাইম নির্বাচনের ফলাফল এবং বিশ্লেষণ',
+    'secureVotingProcess': 'নিরাপদ ভোটিং প্রক্রিয়া',
+    'votingSystemDescription': 'আমাদের ভোটিং সিস্টেম উন্নত এনক্রিপশন এবং আধার-ভিত্তিক যাচাইকরণ ব্যবহার করে যাতে আপনার ভোট নিরাপদ, বেনামী এবং সঠিকভাবে গণনা করা হয়।',
+    'aadharIntegration': 'আধার একীকরণ',
+    'aadharIntegrationDesc': 'তাৎক্ষণিক ভোটার যাচাইকরণের জন্য আধার ব্যবস্থাপনা সিস্টেমের সাথে নির্বিঘ্নে একীভূত।',
+    'currentElectionTitle': 'সাধারণ নির্বাচন ২০২৪ - এখন সক্রিয়',
+    'currentElectionDescription': 'জাতীয় সংসদীয় নির্বাচন বর্তমানে ভোটের জন্য খোলা। আমাদের জাতির ভবিষ্যৎ গঠনে আপনার কণ্ঠস্বর শোনান।',
+    'voteNow': 'এখনই ভোট দিন',
+    'registerToVote': 'ভোট দেওয়ার জন্য নিবন্ধন করুন',
+    'viewLiveResults': 'লাইভ ফলাফল দেখুন',
+    'votingClosed': 'ভোটিং বর্তমানে বন্ধ',
+    'publicPortal': 'পাবলিক পোর্টাল',
+    'adminPortal': 'অ্যাডমিন পোর্টাল'
+  },
+  
+  // Additional languages following same pattern for Telugu, Tamil, etc.
+  te: {
+    'welcome': 'స్వాగతం',
+    'login': 'లాగిన్',
+    'logout': 'లాగ్ అవుట్',
+    'digitalVotingSystem': 'డిజిటల్ ఓటింగ్ సిస్టమ్',
+    'votingPlatformDescription': 'ఆధార్ ధృవీకరణతో నడిచే సురక్షిత, పారదర్శక మరియు అందుబాటులో ఉన్న ఓటింగ్ ప్లాట్‌ఫారమ్। నమ్మకం మరియు సౌలభ్యంతో మీ ప్రజాస్వామ్య హక్కును ఉపయోగించండి।',
+    'digitalVotingPortal': 'డిజిటల్ ఓటింగ్ పోర్టల్',
+    'governmentOfIndia': 'భారత ప్రభుత్వం - ఎన్నికల కమిషన్',
+    'electionSchedule': 'ఎన్నికల షెడ్యూల్',
+    'currentTime': 'ప్రస్తుత సమయం',
+    'votingActive': 'ఓటింగ్ క్రియాశీలం',
+    'votingClosedStatus': 'ఓటింగ్ మూసివేయబడింది',
+    'voterRegistrationTitle': 'ఓటరు నమోదు',
+    'voterRegistrationDesc': 'ఆధార్ ధృవీకరణతో ఓటరుగా నమోదు చేసుకోండి',
+    'castVoteTitle': 'మీ ఓటు వేయండి',
+    'castVoteDesc': 'సురక్షిత బ్లాక్‌చెయిన్-ప్రారంభ ఓటింగ్ ప్రక్రియ',
+    'viewResultsTitle': 'ఫలితాలను చూడండి',
+    'viewResultsDesc': 'రియల్-టైమ్ ఎన్నికల ఫలితాలు మరియు విశ్లేషణ',
+    'secureVotingProcess': 'సురక్షిత ఓటింగ్ ప్రక్రియ',
+    'votingSystemDescription': 'మా ఓటింగ్ సిస్టమ్ అధునాతన ఎన్క్రిప్షన్ మరియు ఆధార్ ఆధారిత ధృవీకరణను ఉపయోగిస్తుంది.',
+    'aadharIntegration': 'ఆధార్ ఏకీకరణ',
+    'aadharIntegrationDesc': 'తక్షణ ఓటరు ధృవీకరణ కోసం ఆధార్ నిర్వహణ వ్యవస్థతో సజావుగా ఏకీకృతం.',
+    'currentElectionTitle': 'సాధారణ ఎన్నికలు 2024 - ఇప్పుడు క్రియాశీలం',
+    'currentElectionDescription': 'జాతీయ పార్లమెంట్ ఎన్నికలు ప్రస్తుతం ఓటింగ్ కోసం తెరిచి ఉన్నాయి। మా దేశ భవిష్యత్తును రూపొందించడంలో మీ స్వరాన్ని వినిపించండి।',
+    'voteNow': 'ఇప్పుడే ఓటు వేయండి',
+    'registerToVote': 'ఓటు వేయడానికి నమోదు చేసుకోండి',
+    'viewLiveResults': 'లైవ్ ఫలితాలను చూడండి',
+    'votingClosed': 'ఓటింగ్ ప్రస్తుతం మూసివేయబడింది',
+    'publicPortal': 'పబ్లిక్ పోర్టల్',
+    'adminPortal': 'అడ్మిన్ పోర్టల్'
+  }
 };
 
 export type TranslationKey = keyof typeof translations.en;
