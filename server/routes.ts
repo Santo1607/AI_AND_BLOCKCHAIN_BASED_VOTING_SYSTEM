@@ -475,7 +475,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Prepare candidate data without auto-generated fields
+      // Validate required fields
+      if (!req.body.name || !req.body.party || !req.body.constituency || !req.body.symbol) {
+        return res.status(400).json({ message: "Name, party, constituency, and symbol are required" });
+      }
+
+      // Create candidate directly in database
+      const now = new Date().toISOString();
       const candidateData = {
         name: req.body.name,
         party: req.body.party,
@@ -483,21 +489,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         symbol: req.body.symbol,
         manifesto: req.body.manifesto || null,
         electionId: parseInt(req.body.electionId) || 1,
-        photoUrl: req.file ? `/uploads/${req.file.filename}` : null
+        photoUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        createdAt: now
       };
-
-      // Validate required fields
-      if (!candidateData.name || !candidateData.party || !candidateData.constituency || !candidateData.symbol) {
-        return res.status(400).json({ message: "Name, party, constituency, and symbol are required" });
-      }
 
       const candidate = await storage.createCandidate(candidateData);
       res.json(candidate);
     } catch (error: any) {
       console.error('Candidate creation error:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ message: error.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') });
-      }
       res.status(400).json({ message: error.message });
     }
   });
