@@ -34,6 +34,9 @@ export const elections = pgTable("elections", {
   startDate: text("start_date").notNull(),
   endDate: text("end_date").notNull(),
   status: text("status").notNull().default("upcoming"), // upcoming, active, completed
+  votingStartTime: text("voting_start_time").default("08:00"),
+  votingEndTime: text("voting_end_time").default("17:00"),
+  resultsTime: text("results_time").default("18:00"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

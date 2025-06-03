@@ -368,13 +368,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Voting with blockchain integration
   app.post("/api/vote", async (req, res) => {
     try {
-      // Check voting hours (8 AM - 5 PM)
+      // Get election timing settings
+      const election = await storage.getElection(1); // Active election
       const currentHour = new Date().getHours();
-      if (currentHour < 8 || currentHour >= 17) {
+      
+      const votingStartHour = election?.votingStartTime ? parseInt(election.votingStartTime.split(':')[0]) : 8;
+      const votingEndHour = election?.votingEndTime ? parseInt(election.votingEndTime.split(':')[0]) : 17;
+      
+      if (currentHour < votingStartHour || currentHour >= votingEndHour) {
         return res.status(403).json({ 
           success: false, 
-          message: "Voting is only allowed between 8:00 AM and 5:00 PM. Please come back during voting hours.",
-          votingHours: "8:00 AM - 5:00 PM"
+          message: `Voting is only allowed between ${election?.votingStartTime || '08:00'} and ${election?.votingEndTime || '17:00'}. Please come back during voting hours.`,
+          votingHours: `${election?.votingStartTime || '08:00'} - ${election?.votingEndTime || '17:00'}`
         });
       }
 
@@ -529,7 +534,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Election results (Admin only, after 6 PM)
+  // Election management routes
+  app.patch("/api/elections/:id", async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const electionId = parseInt(req.params.id);
+      const updateData: any = {};
+
+      if (req.body.votingStartTime) updateData.votingStartTime = req.body.votingStartTime;
+      if (req.body.votingEndTime) updateData.votingEndTime = req.body.votingEndTime;
+      if (req.body.resultsTime) updateData.resultsTime = req.body.resultsTime;
+      if (req.body.title) updateData.title = req.body.title;
+      if (req.body.description) updateData.description = req.body.description;
+
+      const election = await storage.updateElection(electionId, updateData);
+      if (!election) {
+        return res.status(404).json({ message: "Election not found" });
+      }
+
+      res.json(election);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Election results (Admin only, dynamic timing)
   app.get("/api/elections/:electionId/results", async (req, res) => {
     try {
       // Check if user is admin
@@ -538,16 +571,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Admin authentication required to view results" });
       }
 
-      // Check if results can be viewed (after 6 PM)
+      const electionId = parseInt(req.params.electionId);
+      const election = await storage.getElection(electionId);
+      
+      if (!election) {
+        return res.status(404).json({ message: "Election not found" });
+      }
+
+      // Check if results can be viewed based on election settings
       const currentHour = new Date().getHours();
-      if (currentHour < 18) {
+      const resultsHour = election.resultsTime ? parseInt(election.resultsTime.split(':')[0]) : 18;
+      
+      if (currentHour < resultsHour) {
         return res.status(403).json({ 
-          message: "Election results are only available after 6:00 PM",
-          availableAt: "6:00 PM"
+          message: `Election results are only available after ${election.resultsTime || '18:00'}`,
+          availableAt: election.resultsTime || '18:00'
         });
       }
 
-      const electionId = parseInt(req.params.electionId);
       const results = await storage.getElectionResults(electionId);
       res.json(results);
     } catch (error: any) {
