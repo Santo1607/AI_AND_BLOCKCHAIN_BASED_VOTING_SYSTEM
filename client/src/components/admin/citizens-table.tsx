@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useCitizens } from "@/hooks/use-citizens";
-import { Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import type { Citizen } from "@shared/schema";
 
 export function CitizensTable() {
@@ -165,10 +165,10 @@ export function CitizensTable() {
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center text-gray-800">
               <Users className="w-5 h-5 mr-2 text-blue-600" />
-              Citizen Records ({filteredCitizens.length})
+              Citizen Records ({citizens?.length || 0})
             </span>
             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              Total: {filteredCitizens.length}
+              Total: {citizens?.length || 0}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -217,12 +217,13 @@ export function CitizensTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end space-x-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setViewingCitizen(citizen)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:scale-105 transition-all duration-200 p-2"
+                          title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -230,7 +231,8 @@ export function CitizensTable() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setEditingCitizen(citizen)}
-                          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 hover:scale-105 transition-all duration-200 p-2"
+                          title="Edit Citizen"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -238,7 +240,8 @@ export function CitizensTable() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(citizen)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:scale-105 transition-all duration-200 p-2"
+                          title="Delete Citizen"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -251,28 +254,43 @@ export function CitizensTable() {
           </div>
           
           {citizens && citizens.length === 0 && (
-            <div className="text-center py-12">
-              <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No citizens found matching your criteria.</p>
+            <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+              <div className="bg-white p-8 rounded-lg shadow-sm max-w-md mx-auto">
+                <Search className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">No Citizens Found</h3>
+                <p className="text-gray-600">No citizens match your current search criteria. Try adjusting your filters or search terms.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4 border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedDistrict("");
+                    setSelectedGender("");
+                    handleSearch();
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
             </div>
           )}
           
           {/* Pagination */}
           {citizens && citizens.length > 0 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-blue-50 border-t border-gray-200">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">
-                  Showing {citizens.length} of {citizens.length} results
+                <p className="text-sm text-gray-700 font-medium">
+                  Showing <span className="text-blue-600 font-semibold">{citizens.length}</span> of <span className="text-blue-600 font-semibold">{citizens.length}</span> citizens
                 </p>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" disabled>
+                  <Button variant="outline" size="sm" disabled className="border-gray-300 text-gray-400">
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </Button>
-                  <Button variant="outline" size="sm" className="bg-blue-600 text-white">
+                  <Button variant="outline" size="sm" className="bg-blue-600 text-white border-blue-600 hover:bg-blue-700">
                     1
                   </Button>
-                  <Button variant="outline" size="sm" disabled>
+                  <Button variant="outline" size="sm" disabled className="border-gray-300 text-gray-400">
                     Next
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
