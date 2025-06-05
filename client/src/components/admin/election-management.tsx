@@ -192,7 +192,7 @@ export function ElectionManagement() {
               </div>
             </div>
 
-            <div className="text-center space-y-2">
+            <div className="text-center">
               <Button 
                 onClick={() => setEditingElection(activeElection)}
                 className="w-full"
@@ -200,15 +200,6 @@ export function ElectionManagement() {
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Edit Timings
-              </Button>
-              <Button 
-                onClick={() => resetDataMutation.mutate()}
-                variant="outline"
-                className="w-full"
-                disabled={resetDataMutation.isPending}
-              >
-                <Users className="w-4 h-4 mr-2" />
-                {resetDataMutation.isPending ? 'Populating...' : 'Populate All Constituencies'}
               </Button>
             </div>
           </div>
