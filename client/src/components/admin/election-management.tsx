@@ -11,6 +11,16 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Calendar, Clock, Settings, TrendingUp, Users, Vote, BarChart3, PieChart } from "lucide-react";
 import type { Election } from "@shared/schema";
 
+const constituencies = [
+  'Central Delhi', 'East Delhi', 'North Delhi', 'South Delhi', 'West Delhi',
+  'Mumbai North', 'Mumbai South', 'Mumbai Central', 
+  'Bangalore North', 'Bangalore South', 'Bangalore Central',
+  'Chennai North', 'Chennai South', 'Chennai Central',
+  'Coimbatore', 'Madurai', 'Salem', 'Tiruchirapalli', 'Tirunelveli',
+  'Vellore', 'Erode', 'Tiruppur', 'Dindigul', 'Thanjavur',
+  'Cuddalore', 'Nagapattinam', 'Mayiladuthurai', 'Ariyalur'
+];
+
 export function ElectionManagement() {
   const [editingElection, setEditingElection] = useState<Election | null>(null);
   const [votingStartTime, setVotingStartTime] = useState("08:00");
@@ -52,43 +62,28 @@ export function ElectionManagement() {
     }
   });
 
-  const resetDataMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/admin/reset-sample-data", {});
-      if (!response.ok) throw new Error('Failed to reset data');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/elections/1/constituency-results'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
-      toast({ title: 'Success', description: 'All constituencies populated successfully' });
-    },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to populate constituencies', variant: 'destructive' });
-    }
-  });
-
   const handleSaveTimings = () => {
     if (!editingElection) return;
-
+    
     updateElectionMutation.mutate({
       id: editingElection.id,
       timings: {
         votingStartTime,
         votingEndTime,
-        resultsTime,
-        updatedAt: new Date().toISOString()
+        resultsTime
       }
     });
   };
 
+  // Time status calculation
   const getCurrentTimeStatus = () => {
     const now = new Date();
     const currentHour = now.getHours();
-    const votingStart = parseInt(votingStartTime.split(':')[0]);
-    const votingEnd = parseInt(votingEndTime.split(':')[0]);
-    const resultsStart = parseInt(resultsTime.split(':')[0]);
-
+    
+    const votingStart = 8; // 8 AM
+    const votingEnd = 17; // 5 PM
+    const resultsStart = 18; // 6 PM
+    
     if (currentHour < votingStart) {
       return { status: 'pending', message: 'Voting not yet started', color: 'bg-gray-500' };
     } else if (currentHour >= votingStart && currentHour < votingEnd) {
@@ -139,8 +134,9 @@ export function ElectionManagement() {
     if (selectedConstituency === "all") {
       return constituencyResults.constituencyResults;
     } else {
+      const constituencyData = constituencyResults.constituencyResults[selectedConstituency];
       return {
-        [selectedConstituency]: constituencyResults.constituencyResults[selectedConstituency]
+        [selectedConstituency]: constituencyData || []
       };
     }
   };
@@ -169,24 +165,36 @@ export function ElectionManagement() {
               <div className={`w-16 h-16 ${timeStatus.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
                 <Clock className="w-8 h-8 text-white" />
               </div>
-              <p className="font-semibold text-gray-900">{timeStatus.message}</p>
-              <p className="text-sm text-gray-600 mt-1">
-                Current time: {new Date().toLocaleTimeString('en-IN', { hour12: true })}
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">Current Status</h3>
+              <p className="text-gray-600">{timeStatus.message}</p>
+              <div className="mt-2">
+                <Badge 
+                  variant={timeStatus.status === 'active' ? 'default' : 'secondary'}
+                  className={`${
+                    timeStatus.status === 'active' ? 'bg-green-600' : 
+                    timeStatus.status === 'results' ? 'bg-blue-600' : 
+                    timeStatus.status === 'ended' ? 'bg-orange-600' : 'bg-gray-500'
+                  } text-white`}
+                >
+                  {timeStatus.status.toUpperCase()}
+                </Badge>
+              </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Voting Hours:</span>
-                <Badge variant="outline">{votingStartTime} - {votingEndTime}</Badge>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Calendar className="w-8 h-8 text-white" />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Results Available:</span>
-                <Badge variant="outline">{resultsTime} onwards</Badge>
+              <h3 className="text-lg font-semibold text-gray-900">Election Schedule</h3>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>Voting: 8:00 AM - 5:00 PM</p>
+                <p>Results: 6:00 PM onwards</p>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Election Status:</span>
-                <Badge className={timeStatus.color.replace('bg-', 'bg-').replace('-600', '-100 text-') + timeStatus.color.split('-')[1] + '-800'}>
+              <div className="mt-2">
+                <Badge 
+                  variant="outline"
+                  className="border-purple-600 text-purple-600"
+                >
                   {timeStatus.status.toUpperCase()}
                 </Badge>
               </div>
@@ -257,14 +265,14 @@ export function ElectionManagement() {
               <TrendingUp className="w-5 h-5" />
               <span>Election Results</span>
             </div>
-            {timeStatus.status === 'results' && constituencyResults && Object.keys(constituencyResults.constituencyResults || {}).length > 0 && (
+            {timeStatus.status === 'results' && (
               <Select value={selectedConstituency} onValueChange={setSelectedConstituency}>
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select Constituency" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Constituencies</SelectItem>
-                  {Object.keys(constituencyResults.constituencyResults || {}).map((constituency) => (
+                  {constituencies.map((constituency) => (
                     <SelectItem key={constituency} value={constituency}>
                       {constituency}
                     </SelectItem>
@@ -310,46 +318,42 @@ export function ElectionManagement() {
                   </div>
                 )}
 
-                {/* Party-wise Summary (only for all constituencies) */}
+                {/* Party-wise Results */}
                 {selectedConstituency === "all" && partyStats.length > 0 && (
-                  <div className="bg-white border rounded-lg p-6">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <PieChart className="w-5 h-5 text-purple-600" />
-                      <h4 className="text-xl font-bold text-gray-900">Party-wise Performance</h4>
+                  <div className="bg-white border rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 px-6 py-3 border-b">
+                      <h4 className="text-xl font-bold text-gray-900 flex items-center">
+                        <PieChart className="w-5 h-5 mr-2" />
+                        Party-wise Performance
+                      </h4>
                     </div>
-                    <div className="space-y-4">
-                      {partyStats.map((party, index) => (
-                        <div key={party.party} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className={`w-4 h-4 rounded-full ${
-                                index === 0 ? 'bg-green-500' : 
-                                index === 1 ? 'bg-blue-500' : 
-                                index === 2 ? 'bg-orange-500' : 'bg-purple-500'
-                              }`}></div>
-                              <span className="font-semibold text-gray-900">{party.party}</span>
+                    <div className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {partyStats.map((party, index) => (
+                          <div key={party.party} className={`p-4 rounded-lg border ${
+                            index === 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                          }`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="font-semibold text-gray-900">{party.party}</h5>
+                              {index === 0 && <Badge className="bg-green-600">Leading</Badge>}
                             </div>
-                            <div className="text-right">
-                              <span className="text-lg font-bold text-gray-900">{party.totalVotes}</span>
-                              <span className="text-sm text-gray-600 ml-2">({party.percentage}%)</span>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Total Votes:</span>
+                                <span className="font-semibold">{party.totalVotes}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Constituencies Won:</span>
+                                <span className="font-semibold">{party.constituenciesWon}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Vote Share:</span>
+                                <span className="font-semibold">{party.percentage}%</span>
+                              </div>
                             </div>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div 
-                              className={`h-3 rounded-full ${
-                                index === 0 ? 'bg-green-500' : 
-                                index === 1 ? 'bg-blue-500' : 
-                                index === 2 ? 'bg-orange-500' : 'bg-purple-500'
-                              }`}
-                              style={{ width: `${party.percentage}%` }}
-                            ></div>
-                          </div>
-                          <div className="flex items-center justify-between text-sm text-gray-600">
-                            <span>Constituencies Won: {party.constituenciesWon}</span>
-                            <span>Candidates: {party.candidates.length}</span>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -363,7 +367,12 @@ export function ElectionManagement() {
                     </div>
                     <p className="text-2xl font-bold text-blue-900 mt-2">
                       {selectedConstituency === "all" ? constituencyResults.totalVotes : 
-                       filteredResults ? Object.values(filteredResults)[0]?.reduce((sum: number, c: any) => sum + c.voteCount, 0) || 0 : 0}
+                       (() => {
+                         if (!filteredResults) return 0;
+                         const constituencyData = Object.values(filteredResults)[0] as any[];
+                         if (!constituencyData || !Array.isArray(constituencyData)) return 0;
+                         return constituencyData.reduce((sum: number, c: any) => sum + (c?.voteCount || 0), 0);
+                       })()}
                     </p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
@@ -378,10 +387,10 @@ export function ElectionManagement() {
                   <div className="bg-purple-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <BarChart3 className="w-5 h-5 text-purple-600" />
-                      <span className="font-semibold text-purple-900">Candidates</span>
+                      <span className="font-semibold text-purple-900">Turnout</span>
                     </div>
                     <p className="text-2xl font-bold text-purple-900 mt-2">
-                      {filteredResults ? Object.values(filteredResults).reduce((total: number, candidates: any) => total + candidates.length, 0) : 0}
+                      {calculatePercentage(constituencyResults.totalVotes, 1000)}%
                     </p>
                   </div>
                 </div>
@@ -407,41 +416,29 @@ export function ElectionManagement() {
                               <div key={candidate.candidateId} className={`p-4 rounded-lg border ${
                                 candidate.isWinner ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
                               }`}>
-                                <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                                      candidate.isWinner ? 'bg-green-600' : 
-                                      index === 0 ? 'bg-yellow-500' : 
-                                      index === 1 ? 'bg-gray-400' : 'bg-orange-400'
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                      candidate.isWinner ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'
                                     }`}>
-                                      {candidate.isWinner ? '👑' : index + 1}
+                                      {index + 1}
                                     </div>
                                     <div>
-                                      <p className={`font-semibold ${candidate.isWinner ? 'text-green-900' : 'text-gray-900'}`}>
-                                        {candidate.candidateName}
-                                        {candidate.isWinner && <span className="ml-2 text-sm bg-green-200 text-green-800 px-2 py-1 rounded">WINNER</span>}
-                                      </p>
+                                      <p className="font-semibold text-gray-900">{candidate.candidateName}</p>
                                       <p className="text-sm text-gray-600">{candidate.party}</p>
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <p className={`text-2xl font-bold ${candidate.isWinner ? 'text-green-900' : 'text-gray-900'}`}>
-                                      {candidate.voteCount}
-                                    </p>
+                                    <p className="text-xl font-bold text-gray-900">{candidate.voteCount}</p>
                                     <p className="text-sm text-gray-600">
-                                      {calculatePercentage(candidate.voteCount, totalConstituencyVotes)}% of votes
+                                      {calculatePercentage(candidate.voteCount, totalConstituencyVotes)}%
                                     </p>
                                   </div>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className={`h-2 rounded-full ${
-                                      candidate.isWinner ? 'bg-green-500' : 
-                                      index === 0 ? 'bg-yellow-500' : 
-                                      index === 1 ? 'bg-gray-400' : 'bg-orange-400'
-                                    }`}
-                                    style={{ width: `${calculatePercentage(candidate.voteCount, totalConstituencyVotes)}%` }}
-                                  ></div>
+                                  {candidate.isWinner && (
+                                    <Badge className="bg-green-600 ml-3">
+                                      Winner
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -453,15 +450,21 @@ export function ElectionManagement() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                No votes have been cast yet.
+              <div className="text-center py-8">
+                <Vote className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Available</h3>
+                <p className="text-gray-600">Election results will be available after voting ends and counting is complete.</p>
               </div>
             )
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p>Results will be available after {resultsTime}</p>
-              <p className="text-sm mt-2">Current status: {timeStatus.message}</p>
+            <div className="text-center py-8">
+              <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Results Not Yet Available</h3>
+              <p className="text-gray-600">
+                {timeStatus.status === 'pending' && 'Voting has not started yet. Results will be available after 6:00 PM.'}
+                {timeStatus.status === 'active' && 'Voting is currently in progress. Results will be available after 6:00 PM.'}
+                {timeStatus.status === 'ended' && 'Voting has ended. Results will be available starting at 6:00 PM.'}
+              </p>
             </div>
           )}
         </CardContent>
