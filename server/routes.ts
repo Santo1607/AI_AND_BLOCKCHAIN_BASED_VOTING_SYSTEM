@@ -711,11 +711,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Delete all existing candidates
-      await db.delete(candidates);
-      
       // Recreate candidates for all constituencies
       const electionId = 1;
+      
+      // Delete all existing candidates
+      const deletedCandidates = await storage.getCandidatesByElection(electionId);
+      for (const candidate of deletedCandidates) {
+        await storage.deleteCandidate(candidate.id);
+      }
       
       const allConstituencies = [
         'Central Delhi', 'East Delhi', 'North Delhi', 'South Delhi', 'West Delhi',

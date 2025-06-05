@@ -52,6 +52,22 @@ export function ElectionManagement() {
     }
   });
 
+  const resetDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/reset-sample-data", {});
+      if (!response.ok) throw new Error('Failed to reset data');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/elections/1/constituency-results'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
+      toast({ title: 'Success', description: 'All constituencies populated successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to populate constituencies', variant: 'destructive' });
+    }
+  });
+
   const handleSaveTimings = () => {
     if (!editingElection) return;
 
@@ -176,7 +192,7 @@ export function ElectionManagement() {
               </div>
             </div>
 
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <Button 
                 onClick={() => setEditingElection(activeElection)}
                 className="w-full"
@@ -184,6 +200,15 @@ export function ElectionManagement() {
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Edit Timings
+              </Button>
+              <Button 
+                onClick={() => resetDataMutation.mutate()}
+                variant="outline"
+                className="w-full"
+                disabled={resetDataMutation.isPending}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                {resetDataMutation.isPending ? 'Populating...' : 'Populate All Constituencies'}
               </Button>
             </div>
           </div>
