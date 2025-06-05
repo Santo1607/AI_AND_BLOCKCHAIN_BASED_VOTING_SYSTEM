@@ -22,14 +22,14 @@ export function ElectionManagement() {
     queryFn: () => apiRequest("GET", "/api/elections").then(res => res.json())
   });
 
-  const { data: results, isLoading: resultsLoading } = useQuery({
-    queryKey: ['/api/elections/1/results'],
+  const { data: constituencyResults, isLoading: resultsLoading } = useQuery({
+    queryKey: ['/api/elections/1/constituency-results'],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/elections/1/results");
+        const response = await apiRequest("GET", "/api/elections/1/constituency-results");
         return await response.json();
       } catch (error) {
-        return [];
+        return { constituencyResults: {}, overallWinner: null, totalVotes: 0 };
       }
     }
   });
@@ -198,47 +198,102 @@ export function ElectionManagement() {
           {timeStatus.status === 'results' ? (
             resultsLoading ? (
               <div className="text-center py-8">Loading results...</div>
-            ) : results && results.length > 0 ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            ) : constituencyResults && Object.keys(constituencyResults.constituencyResults || {}).length > 0 ? (
+              <div className="space-y-6">
+                {/* Overall Winner Section */}
+                {constituencyResults.overallWinner && (
+                  <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-lg p-6">
+                    <div className="text-center">
+                      <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Vote className="w-10 h-10 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-yellow-900 mb-2">🏆 Overall Winner</h3>
+                      <p className="text-3xl font-bold text-yellow-900">{constituencyResults.overallWinner.candidateName}</p>
+                      <p className="text-lg text-yellow-800">{constituencyResults.overallWinner.party}</p>
+                      <div className="grid grid-cols-2 gap-4 mt-4 max-w-md mx-auto">
+                        <div className="bg-white rounded-lg p-3">
+                          <p className="text-sm text-gray-600">Constituencies Won</p>
+                          <p className="text-2xl font-bold text-yellow-900">{constituencyResults.overallWinner.constituenciesWon}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3">
+                          <p className="text-sm text-gray-600">Total Votes</p>
+                          <p className="text-2xl font-bold text-yellow-900">{constituencyResults.overallWinner.totalVotes}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Summary Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <Users className="w-5 h-5 text-blue-600" />
                       <span className="font-semibold text-blue-900">Total Votes Cast</span>
                     </div>
                     <p className="text-2xl font-bold text-blue-900 mt-2">
-                      {results.reduce((sum: number, r: any) => sum + r.voteCount, 0)}
+                      {constituencyResults.totalVotes}
                     </p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <Vote className="w-5 h-5 text-green-600" />
-                      <span className="font-semibold text-green-900">Leading Candidate</span>
+                      <span className="font-semibold text-green-900">Constituencies</span>
                     </div>
-                    <p className="text-lg font-bold text-green-900 mt-2">
-                      {results[0]?.candidateName || 'No votes yet'}
+                    <p className="text-2xl font-bold text-green-900 mt-2">
+                      {Object.keys(constituencyResults.constituencyResults).length}
+                    </p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-5 h-5 text-purple-600" />
+                      <span className="font-semibold text-purple-900">Total Candidates</span>
+                    </div>
+                    <p className="text-2xl font-bold text-purple-900 mt-2">
+                      {Object.values(constituencyResults.constituencyResults).reduce((total: number, candidates: any) => total + candidates.length, 0)}
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Detailed Results:</h4>
-                  {results.map((result: any, index: number) => (
-                    <div key={result.candidateId} className="flex items-center justify-between p-4 bg-white border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                          index === 0 ? 'bg-gold-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-400'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{result.candidateName}</p>
-                          <p className="text-sm text-gray-600">{result.party}</p>
-                        </div>
+                {/* Constituency-wise Results */}
+                <div className="space-y-6">
+                  <h4 className="text-xl font-bold text-gray-900">Constituency-wise Results</h4>
+                  {Object.entries(constituencyResults.constituencyResults).map(([constituency, candidates]: [string, any]) => (
+                    <div key={constituency} className="bg-white border rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-6 py-3 border-b">
+                        <h5 className="text-lg font-semibold text-gray-900">{constituency}</h5>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-gray-900">{result.voteCount}</p>
-                        <p className="text-sm text-gray-600">votes</p>
+                      <div className="p-4">
+                        <div className="space-y-3">
+                          {candidates.map((candidate: any, index: number) => (
+                            <div key={candidate.candidateId} className={`flex items-center justify-between p-3 rounded-lg border ${
+                              candidate.isWinner ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                            }`}>
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
+                                  candidate.isWinner ? 'bg-green-600' : 
+                                  index === 0 ? 'bg-yellow-500' : 
+                                  index === 1 ? 'bg-gray-400' : 'bg-orange-400'
+                                }`}>
+                                  {candidate.isWinner ? '👑' : index + 1}
+                                </div>
+                                <div>
+                                  <p className={`font-semibold ${candidate.isWinner ? 'text-green-900' : 'text-gray-900'}`}>
+                                    {candidate.candidateName}
+                                    {candidate.isWinner && <span className="ml-2 text-sm bg-green-200 text-green-800 px-2 py-1 rounded">WINNER</span>}
+                                  </p>
+                                  <p className="text-sm text-gray-600">{candidate.party}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className={`text-2xl font-bold ${candidate.isWinner ? 'text-green-900' : 'text-gray-900'}`}>
+                                  {candidate.voteCount}
+                                </p>
+                                <p className="text-sm text-gray-600">votes</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ))}

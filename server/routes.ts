@@ -647,6 +647,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Constituency-wise election results (Admin access)
+  app.get("/api/elections/:electionId/constituency-results", async (req, res) => {
+    try {
+      // Check if user is admin
+      const adminId = (req as any).session?.adminId;
+      if (!adminId) {
+        return res.status(401).json({ message: "Admin authentication required to view results" });
+      }
+
+      const electionId = parseInt(req.params.electionId);
+      const election = await storage.getElection(electionId);
+      
+      if (!election) {
+        return res.status(404).json({ message: "Election not found" });
+      }
+
+      // Get constituency-wise results
+      const results = await storage.getConstituencyWiseResults(electionId);
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Public election results (time-restricted for voters)
   app.get("/api/public/elections/:electionId/results", async (req, res) => {
     try {

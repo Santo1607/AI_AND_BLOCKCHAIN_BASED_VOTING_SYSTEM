@@ -56,6 +56,11 @@ export interface IStorage {
   hasVoted(electionId: number, voterAadhar: string): Promise<boolean>;
   getVotesByElection(electionId: number): Promise<Vote[]>;
   getElectionResults(electionId: number): Promise<{ candidateId: number; candidateName: string; party: string; voteCount: number }[]>;
+  getConstituencyWiseResults(electionId: number): Promise<{
+    constituencyResults: { [constituency: string]: { candidateId: number; candidateName: string; party: string; constituency: string; voteCount: number; isWinner: boolean }[] };
+    overallWinner: { candidateId: number; candidateName: string; party: string; totalVotes: number; constituenciesWon: number } | null;
+    totalVotes: number;
+  }>;
   
   // Voter registration methods
   registerVoter(registrationData: VoterRegistrationData): Promise<VoterRegistration>;
@@ -403,6 +408,101 @@ export class DatabaseStorage implements IStorage {
       party: candidate.party,
       voteCount: voteCounts.get(candidate.id) || 0
     })).sort((a, b) => b.voteCount - a.voteCount);
+  }
+
+  async getConstituencyWiseResults(electionId: number): Promise<{
+    constituencyResults: { [constituency: string]: { candidateId: number; candidateName: string; party: string; constituency: string; voteCount: number; isWinner: boolean }[] };
+    overallWinner: { candidateId: number; candidateName: string; party: string; totalVotes: number; constituenciesWon: number } | null;
+    totalVotes: number;
+  }> {
+    const electionVotes = await this.getVotesByElection(electionId);
+    const electionCandidates = await this.getCandidatesByElection(electionId);
+    
+    // Group candidates by constituency
+    const candidatesByConstituency = new Map<string, Candidate[]>();
+    electionCandidates.forEach(candidate => {
+      if (!candidatesByConstituency.has(candidate.constituency)) {
+        candidatesByConstituency.set(candidate.constituency, []);
+      }
+      candidatesByConstituency.get(candidate.constituency)!.push(candidate);
+    });
+
+    // Count votes for each candidate
+    const voteCounts = new Map<number, number>();
+    electionVotes.forEach(vote => {
+      const count = voteCounts.get(vote.candidateId) || 0;
+      voteCounts.set(vote.candidateId, count + 1);
+    });
+
+    // Calculate constituency-wise results
+    const constituencyResults: { [constituency: string]: any[] } = {};
+    const constituencyWinners = new Map<string, { candidateId: number; candidateName: string; party: string; voteCount: number }>();
+
+    candidatesByConstituency.forEach((candidates, constituency) => {
+      const results = candidates.map(candidate => ({
+        candidateId: candidate.id,
+        candidateName: candidate.name,
+        party: candidate.party,
+        constituency: candidate.constituency,
+        voteCount: voteCounts.get(candidate.id) || 0,
+        isWinner: false
+      })).sort((a, b) => b.voteCount - a.voteCount);
+
+      // Mark the winner in each constituency
+      if (results.length > 0 && results[0].voteCount > 0) {
+        results[0].isWinner = true;
+        constituencyWinners.set(constituency, {
+          candidateId: results[0].candidateId,
+          candidateName: results[0].candidateName,
+          party: results[0].party,
+          voteCount: results[0].voteCount
+        });
+      }
+
+      constituencyResults[constituency] = results;
+    });
+
+    // Calculate overall winner based on constituencies won
+    let overallWinner = null;
+    if (constituencyWinners.size > 0) {
+      const partyWins = new Map<string, { count: number; totalVotes: number; candidateInfo: any }>();
+      
+      constituencyWinners.forEach(winner => {
+        if (!partyWins.has(winner.party)) {
+          partyWins.set(winner.party, { count: 0, totalVotes: 0, candidateInfo: winner });
+        }
+        const partyData = partyWins.get(winner.party)!;
+        partyData.count += 1;
+        partyData.totalVotes += winner.voteCount;
+      });
+
+      // Find party with most constituency wins
+      let maxWins = 0;
+      let winningParty = '';
+      partyWins.forEach((data, party) => {
+        if (data.count > maxWins) {
+          maxWins = data.count;
+          winningParty = party;
+        }
+      });
+
+      if (winningParty) {
+        const winnerData = partyWins.get(winningParty)!;
+        overallWinner = {
+          candidateId: winnerData.candidateInfo.candidateId,
+          candidateName: winnerData.candidateInfo.candidateName,
+          party: winningParty,
+          totalVotes: winnerData.totalVotes,
+          constituenciesWon: winnerData.count
+        };
+      }
+    }
+
+    return {
+      constituencyResults,
+      overallWinner,
+      totalVotes: electionVotes.length
+    };
   }
 
   // Voter registration methods
