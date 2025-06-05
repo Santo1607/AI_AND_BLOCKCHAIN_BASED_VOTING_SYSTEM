@@ -70,8 +70,8 @@ app.use((req, res, next) => {
   }
 
   // Windows-compatible server configuration
-  const port =3000;
-  server.listen(port, 'localhost', () => {
+  const port = process.env.PORT || 5000;
+  server.listen(port, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 })();
