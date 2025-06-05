@@ -10,6 +10,7 @@ declare module "express-session" {
   }
 }
 import { storage } from "./storage";
+import { db } from "./db";
 import { 
   loginSchema, 
   insertCitizenSchema, 
@@ -17,7 +18,8 @@ import {
   insertElectionSchema,
   insertCandidateSchema,
   voteSchema,
-  voterRegistrationSchema
+  voterRegistrationSchema,
+  candidates
 } from "@shared/schema";
 import multer from "multer";
 import path from "path";
@@ -712,150 +714,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete all existing candidates
       await db.delete(candidates);
       
-      // Recreate candidates with expanded constituencies
-      const electionId = 1; // Assuming first election
+      // Recreate candidates for all constituencies
+      const electionId = 1;
+      
+      const allConstituencies = [
+        'Central Delhi', 'East Delhi', 'North Delhi', 'South Delhi', 'West Delhi',
+        'Mumbai North', 'Mumbai South', 'Mumbai Central', 
+        'Bangalore North', 'Bangalore South', 'Bangalore Central',
+        'Chennai North', 'Chennai South', 'Chennai Central',
+        'Coimbatore', 'Madurai', 'Salem', 'Tiruchirapalli', 'Tirunelveli',
+        'Vellore', 'Erode', 'Tiruppur', 'Dindigul', 'Thanjavur',
+        'Cuddalore', 'Nagapattinam', 'Mayiladuthurai', 'Ariyalur'
+      ];
 
-      // Chennai Central Constituency
-      await storage.createCandidate({
-        electionId,
-        name: "Dr. Amit Singh",
-        party: "National Development Party",
-        constituency: "Chennai Central",
-        symbol: "lotus",
-        manifesto: "Economic growth, healthcare reform, and education enhancement"
+      const parties = [
+        { name: "National Development Party", symbol: "lotus" },
+        { name: "Progressive Alliance", symbol: "hand" },
+        { name: "Common Man's Party", symbol: "broom" },
+        { name: "Revolutionary Front", symbol: "hammer" },
+        { name: "Regional People's Party", symbol: "bicycle" }
+      ];
+
+      const candidateNames = [
+        "Dr. Amit Singh", "Ms. Priya Venkatesh", "Shri Rajesh Kumar",
+        "Ms. Kavitha Nair", "Dr. Murugan Selvam", "Shri Arjun Pandey",
+        "Shri Ravi Patel", "Ms. Deepa Krishnan", "Dr. Sundar Raman",
+        "Ms. Lakshmi Devi", "Shri Karthik Subramanian", "Dr. Anitha Kumari",
+        "Shri Ganesh Babu", "Ms. Meera Krishnamurthy", "Dr. Venkatesh Iyer",
+        "Ms. Sita Ramachandran", "Shri Vikram Sharma", "Dr. Rekha Agarwal",
+        "Shri Manoj Tiwari", "Ms. Nandini Reddy", "Dr. Suresh Pillai",
+        "Ms. Geeta Mathur", "Shri Arun Kumar", "Dr. Pooja Sinha",
+        "Shri Rahul Gupta", "Ms. Divya Krishnan", "Dr. Ashok Mehta",
+        "Ms. Sunitha Rao", "Shri Praveen Nair", "Dr. Manjula Devi"
+      ];
+
+      const manifestos = [
+        "Economic growth and infrastructure development",
+        "Healthcare reform and education enhancement", 
+        "Environmental protection and sustainable development",
+        "Social justice and rural development",
+        "Anti-corruption and digital governance",
+        "Women empowerment and small business support",
+        "Agricultural modernization and farmer welfare",
+        "Industrial development and job creation",
+        "Workers' rights and labor welfare",
+        "Urban development and smart city initiatives"
+      ];
+
+      // Create 3 candidates per constituency
+      let candidateIndex = 0;
+      for (const constituency of allConstituencies) {
+        for (let i = 0; i < 3; i++) {
+          const party = parties[i % parties.length];
+          const name = candidateNames[candidateIndex % candidateNames.length];
+          const manifesto = manifestos[candidateIndex % manifestos.length];
+          
+          await storage.createCandidate({
+            electionId,
+            name: `${name} (${constituency.split(' ')[0]})`,
+            party: party.name,
+            constituency,
+            symbol: party.symbol,
+            manifesto
+          });
+          
+          candidateIndex++;
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Sample data reset successfully. Created ${allConstituencies.length * 3} candidates across ${allConstituencies.length} constituencies.` 
       });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Ms. Priya Venkatesh",
-        party: "Progressive Alliance",
-        constituency: "Chennai Central",
-        symbol: "hand",
-        manifesto: "Urban development and infrastructure improvement"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Shri Rajesh Kumar",
-        party: "Common Man's Party",
-        constituency: "Chennai Central",
-        symbol: "broom",
-        manifesto: "Anti-corruption and digital governance"
-      });
-
-      // Madurai Constituency
-      await storage.createCandidate({
-        electionId,
-        name: "Ms. Kavitha Nair",
-        party: "Progressive Alliance",
-        constituency: "Madurai",
-        symbol: "hand",
-        manifesto: "Social justice, environmental protection, and rural development"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Dr. Murugan Selvam",
-        party: "National Development Party",
-        constituency: "Madurai",
-        symbol: "lotus",
-        manifesto: "Agricultural modernization and farmer welfare"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Shri Arjun Pandey",
-        party: "Revolutionary Front",
-        constituency: "Madurai",
-        symbol: "hammer",
-        manifesto: "Workers' rights and industrial development"
-      });
-
-      // Coimbatore Constituency
-      await storage.createCandidate({
-        electionId,
-        name: "Shri Ravi Patel",
-        party: "Common Man's Party",
-        constituency: "Coimbatore",
-        symbol: "broom",
-        manifesto: "Anti-corruption, transparency, and citizen empowerment"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Ms. Deepa Krishnan",
-        party: "National Development Party",
-        constituency: "Coimbatore",
-        symbol: "lotus",
-        manifesto: "Textile industry growth and job creation"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Dr. Sundar Raman",
-        party: "Progressive Alliance",
-        constituency: "Coimbatore",
-        symbol: "hand",
-        manifesto: "Healthcare accessibility and education reform"
-      });
-
-      // Tiruppur Constituency
-      await storage.createCandidate({
-        electionId,
-        name: "Ms. Lakshmi Devi",
-        party: "Regional People's Party",
-        constituency: "Tiruppur",
-        symbol: "bicycle",
-        manifesto: "Women empowerment and small business support"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Shri Karthik Subramanian",
-        party: "National Development Party",
-        constituency: "Tiruppur",
-        symbol: "lotus",
-        manifesto: "Export promotion and industrial growth"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Dr. Anitha Kumari",
-        party: "Progressive Alliance",
-        constituency: "Tiruppur",
-        symbol: "hand",
-        manifesto: "Environmental conservation and sustainable development"
-      });
-
-      // Salem Constituency
-      await storage.createCandidate({
-        electionId,
-        name: "Shri Ganesh Babu",
-        party: "Common Man's Party",
-        constituency: "Salem",
-        symbol: "broom",
-        manifesto: "Clean governance and infrastructure development"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Ms. Meera Krishnamurthy",
-        party: "National Development Party",
-        constituency: "Salem",
-        symbol: "lotus",
-        manifesto: "Steel industry modernization and employment"
-      });
-
-      await storage.createCandidate({
-        electionId,
-        name: "Dr. Venkatesh Iyer",
-        party: "Revolutionary Front",
-        constituency: "Salem",
-        symbol: "hammer",
-        manifesto: "Labor welfare and industrial safety"
-      });
-
-      res.json({ success: true, message: "Sample data reset successfully" });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
