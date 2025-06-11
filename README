@@ -1,0 +1,35 @@
+#  AI-Based Biometric Voting System
+
+An advanced and secure voting platform using biometric authentication (fingerprint + face recognition) to ensure transparency, speed, and efficiency in elections. Designed to eliminate fraud, reduce manual effort, and deliver real-time results.
+
+##  Features
+
+-  **Biometric Verification** (Fingerprint + Face)
+-  **Fraud-Proof Voting**
+-  **Vote in Under a Minute**
+-  **Results in Less Than an Hour**
+-  **No Booth Slips or Manual ID Checks**
+-  **Digital Vote Logs for Transparency**
+-  **Constituency-wise Candidate Upload by Officials**
+-  **Massive Reduction in Time & Government Resource Usage**
+
+##  Why This System?
+
+| Aspect                     | Traditional Voting System                             | AI-Based Voting System                         |
+|----------------------------|--------------------------------------------------------|------------------------------------------------|
+| Booth Setup & Slips        | Takes 2–4 months; manual slip distribution            | Not required                                   |
+| Voting Time per Person     | 4–7 minutes                                           | 45 seconds – 1 minute                          |
+| Result Declaration         | After 1 month                                         | Within an hour                                 |
+| Workforce Usage            | Involves large-scale staff and resource deployment   | Minimal human effort, tech-driven process      |
+| Security & Fraud           | Prone to impersonation, fake votes                   | Tamper-proof via biometric authentication      |
+| Transparency               | Limited traceability                                 | Full digital logs and traceable voting records |
+
+##  Technologies Used
+
+- **Frontend**: React.js / Vite
+- **Backend**: Node.js / Express / FastAPI
+- **Database**: Supabase 
+- **Biometrics**: Fingerprint Sensor, Face Recognition APIs
+- **AI/ML**: Facial match confidence, vote fraud detection
+- **Cloud Deployment**: Render
+
