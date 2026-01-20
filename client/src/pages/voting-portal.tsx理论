@@ -1,0 +1,196 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { apiRequest } from "@/lib/queryClient";
+import { useLanguage } from "@/hooks/use-language";
+import { Vote, Users, TrendingUp, ArrowRight, Clock, AlertCircle, Shield } from "lucide-react";
+import type { Election } from "@shared/schema";
+
+export default function VotingPortal() {
+  const { t } = useLanguage();
+  const [, setLocation] = useLocation();
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  const { data: elections } = useQuery<Election[]>({
+    queryKey: ['/api/elections'],
+    queryFn: () => apiRequest("GET", "/api/elections").then(res => res.json())
+  });
+
+  const activeElections = elections?.filter(e => e.status === "active") || [];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Use Indian Standard Time (IST)
+      const istTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      setCurrentTime(new Date(istTime));
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                <Vote className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-900 leading-tight">{t('governmentOfIndia')}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/public")}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                {t('publicPortal')}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/admin")}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                {t('adminPortal')}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Welcome Section */}
+        <div className="text-center mb-12">
+          <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Vote className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t('digitalVotingSystem')}</h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            {t('votingPlatformDescription')}
+          </p>
+        </div>
+
+        {/* Status Banner */}
+        {activeElections.length > 0 && (
+          <div className="mb-12">
+            <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-6 h-6 text-blue-600" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Current Status</h3>
+                      <p className="text-sm text-gray-600">
+                        {activeElections.length} Active {activeElections.length === 1 ? 'Election' : 'Elections'} Available
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Current Time (IST)</p>
+                    <p className="font-semibold text-gray-900">
+                      {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Navigation Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {/* Registration Card */}
+          <Card 
+            className="shadow-xl border-0 cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+            onClick={() => setLocation("/voting/register")}
+          >
+            <CardHeader className="text-center pb-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-blue-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t('voterRegistrationTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 mb-6 min-h-[3rem]">
+                {t('voterRegistrationDesc')}
+              </p>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 font-bold h-12">
+                Register to Vote
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Voting Card */}
+          <Card 
+            className="shadow-xl border-0 cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+            onClick={() => setLocation("/voting/cast")}
+          >
+            <CardHeader className="text-center pb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Vote className="w-8 h-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t('castVoteTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 mb-6 min-h-[3rem]">
+                Select an election and cast your secure ballot using blockchain.
+              </p>
+              <Button className="w-full bg-green-600 hover:bg-green-700 font-bold h-12">
+                Cast Your Vote
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Results Card */}
+          <Card 
+            className="shadow-xl border-0 cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+            onClick={() => setLocation("/voting/results")}
+          >
+            <CardHeader className="text-center pb-4">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-8 h-8 text-orange-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900">{t('viewResultsTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 mb-6 min-h-[3rem]">
+                View live election results and constituency-wise winner details.
+              </p>
+              <Button className="w-full bg-orange-600 hover:bg-orange-700 font-bold h-12">
+                Election Results
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Security Info */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-8">
+            <div className="flex items-start space-x-4">
+              <Shield className="w-8 h-8 text-blue-600 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="text-xl font-bold text-blue-900 mb-2">Secure Digital Voting</h3>
+                <p className="text-blue-800">
+                  Our system utilizes a decentralized blockchain infrastructure to ensure your vote is immutable and transparent. 
+                  Biometric verification and Aadhar integration prevent identity fraud, making this the most secure way to participate in democracy.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+理论

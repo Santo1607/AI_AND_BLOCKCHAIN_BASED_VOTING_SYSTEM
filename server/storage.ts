@@ -1,13 +1,13 @@
-import { 
-  admins, 
-  citizens, 
+import {
+  admins,
+  citizens,
   elections,
   candidates,
   votes,
   voterRegistrations,
-  type Admin, 
-  type InsertAdmin, 
-  type Citizen, 
+  type Admin,
+  type InsertAdmin,
+  type Citizen,
   type InsertCitizen,
   type Election,
   type InsertElection,
@@ -16,7 +16,10 @@ import {
   type Vote,
   type VoteData,
   type VoterRegistration,
-  type VoterRegistrationData
+  type VoterRegistrationData,
+  deathCertificates,
+  type DeathCertificate,
+  type InsertDeathCertificate
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
@@ -26,7 +29,7 @@ export interface IStorage {
   getAdmin(id: number): Promise<Admin | undefined>;
   getAdminByUsername(username: string): Promise<Admin | undefined>;
   createAdmin(admin: InsertAdmin): Promise<Admin>;
-  
+
   // Citizen methods
   getCitizen(id: number): Promise<Citizen | undefined>;
   getCitizenByAadhar(aadharNumber: string): Promise<Citizen | undefined>;
@@ -36,21 +39,21 @@ export interface IStorage {
   updateCitizen(id: number, citizen: Partial<InsertCitizen>): Promise<Citizen | undefined>;
   deleteCitizen(id: number): Promise<boolean>;
   verifyCitizen(aadharNumber: string, dateOfBirth: string): Promise<Citizen | undefined>;
-  
+
   // Election methods
   getAllElections(): Promise<Election[]>;
   getElection(id: number): Promise<Election | undefined>;
   createElection(election: InsertElection): Promise<Election>;
   updateElection(id: number, election: Partial<InsertElection>): Promise<Election | undefined>;
   deleteElection(id: number): Promise<boolean>;
-  
+
   // Candidate methods
   getCandidatesByElection(electionId: number): Promise<Candidate[]>;
   getCandidate(id: number): Promise<Candidate | undefined>;
   createCandidate(candidate: InsertCandidate): Promise<Candidate>;
   updateCandidate(id: number, candidate: Partial<InsertCandidate>): Promise<Candidate | undefined>;
   deleteCandidate(id: number): Promise<boolean>;
-  
+
   // Voting methods
   castVote(voteData: VoteData): Promise<Vote>;
   hasVoted(electionId: number, voterAadhar: string): Promise<boolean>;
@@ -61,11 +64,16 @@ export interface IStorage {
     overallWinner: { candidateId: number; candidateName: string; party: string; totalVotes: number; constituenciesWon: number } | null;
     totalVotes: number;
   }>;
-  
+
   // Voter registration methods
-  registerVoter(registrationData: VoterRegistrationData): Promise<VoterRegistration>;
+  registerVoter(registrationData: VoterRegistrationData): Promise<{ registration: VoterRegistration; citizen: Citizen }>;
   getVoterRegistration(aadharNumber: string): Promise<VoterRegistration | undefined>;
   isEligibleToVote(aadharNumber: string, dateOfBirth: string): Promise<boolean>;
+
+  // Death Certificate methods
+  createDeathCertificate(cert: InsertDeathCertificate): Promise<DeathCertificate>;
+  getDeathCertificate(id: number): Promise<DeathCertificate | undefined>;
+  getAllDeathCertificates(): Promise<DeathCertificate[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -86,27 +94,31 @@ export class DatabaseStorage implements IStorage {
         });
       }
 
-      // Check if sample citizens exist
-      const existingCitizen = await this.getCitizenByAadhar("1234-5678-9012");
-      if (!existingCitizen) {
-        // Create sample citizens
+      // Check if sample citizens exist individually
+      const citizen1 = await this.getCitizenByAadhar("1234-5678-9012");
+      if (!citizen1) {
         await this.createCitizen({
           name: "Rajesh Kumar",
           aadharNumber: "1234-5678-9012",
           dateOfBirth: "1985-08-15",
           gender: "male",
           address: "123 Main Street, Andheri West",
+          state: "Tamil Nadu",
           district: "Mumbai",
           constituency: "Chennai Central",
           pincode: "400058"
         });
+      }
 
+      const citizen2 = await this.getCitizenByAadhar("9876-5432-1098");
+      if (!citizen2) {
         await this.createCitizen({
           name: "Priya Sharma",
           aadharNumber: "9876-5432-1098",
           dateOfBirth: "1992-03-22",
           gender: "female",
           address: "456 Central Avenue, Karol Bagh",
+          state: "Tamil Nadu",
           district: "Delhi",
           constituency: "Madurai",
           pincode: "110005"
@@ -119,14 +131,16 @@ export class DatabaseStorage implements IStorage {
         // Create sample election
         const election = await this.createElection({
           title: "General Election 2024",
-          description: "National Parliamentary Election",
+          description: "National Parliamentary Election for Tamil Nadu",
           startDate: "2024-04-01",
           endDate: "2024-04-07",
-          status: "active"
+          status: "active",
+          electionScope: "State",
+          state: "Tamil Nadu"
         });
 
         // Create candidates for the election across multiple constituencies
-        
+
         // Chennai Central Constituency
         await this.createCandidate({
           electionId: election.id,
@@ -323,29 +337,29 @@ export class DatabaseStorage implements IStorage {
 
   async searchCitizens(query: string, district?: string, gender?: string): Promise<Citizen[]> {
     let queryBuilder = db.select().from(citizens);
-    
+
     const conditions = [];
-    
+
     if (query) {
       conditions.push(
         sql`${citizens.name} ILIKE ${'%' + query + '%'} OR ${citizens.aadharNumber} LIKE ${'%' + query + '%'}`
       );
     }
-    
+
     if (district) {
       conditions.push(eq(citizens.district, district));
     }
-    
+
     if (gender) {
       conditions.push(eq(citizens.gender, gender));
     }
-    
+
     if (conditions.length > 0) {
       queryBuilder = queryBuilder.where(
         conditions.length === 1 ? conditions[0] : and(...conditions)
       );
     }
-    
+
     return await queryBuilder;
   }
 
@@ -509,7 +523,7 @@ export class DatabaseStorage implements IStorage {
   async getElectionResults(electionId: number): Promise<{ candidateId: number; candidateName: string; party: string; voteCount: number }[]> {
     const electionVotes = await this.getVotesByElection(electionId);
     const electionCandidates = await this.getCandidatesByElection(electionId);
-    
+
     const voteCounts = new Map<number, number>();
     electionVotes.forEach(vote => {
       const count = voteCounts.get(vote.candidateId) || 0;
@@ -531,7 +545,7 @@ export class DatabaseStorage implements IStorage {
   }> {
     const electionVotes = await this.getVotesByElection(electionId);
     const electionCandidates = await this.getCandidatesByElection(electionId);
-    
+
     // Group candidates by constituency
     const candidatesByConstituency = new Map<string, Candidate[]>();
     electionCandidates.forEach(candidate => {
@@ -580,7 +594,7 @@ export class DatabaseStorage implements IStorage {
     let overallWinner = null;
     if (constituencyWinners.size > 0) {
       const partyWins = new Map<string, { count: number; totalVotes: number; candidateInfo: any }>();
-      
+
       constituencyWinners.forEach(winner => {
         if (!partyWins.has(winner.party)) {
           partyWins.set(winner.party, { count: 0, totalVotes: 0, candidateInfo: winner });
@@ -620,7 +634,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Voter registration methods
-  async registerVoter(registrationData: VoterRegistrationData): Promise<VoterRegistration> {
+  async registerVoter(registrationData: VoterRegistrationData): Promise<{ registration: VoterRegistration; citizen: Citizen }> {
     const citizen = await this.verifyCitizen(registrationData.aadharNumber, registrationData.dateOfBirth);
     if (!citizen) {
       throw new Error("Citizen verification failed. Please check your Aadhar number and date of birth.");
@@ -632,20 +646,31 @@ export class DatabaseStorage implements IStorage {
       throw new Error("This Aadhar number is already registered as a voter.");
     }
 
+    // Update citizen with selected location if provided
+    if (registrationData.state && registrationData.constituency) {
+      await this.updateCitizen(citizen.id, {
+        state: registrationData.state,
+        constituency: registrationData.constituency
+      });
+      // Fetch updated citizen data
+      const updatedCitizen = await this.getCitizen(citizen.id);
+      if (updatedCitizen) {
+        Object.assign(citizen, updatedCitizen);
+      }
+    }
+
     const now = new Date().toISOString();
-    const voterIdNumber = `VID${Date.now()}${citizen.id}`;
-    
+
     const [registration] = await db
       .insert(voterRegistrations)
       .values({
         citizenId: citizen.id,
-        voterIdNumber,
         registeredAt: now,
         status: "active"
       })
       .returning();
-    
-    return registration;
+
+    return { registration, citizen };
   }
 
   async getVoterRegistration(aadharNumber: string): Promise<VoterRegistration | undefined> {
@@ -656,7 +681,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(voterRegistrations)
       .where(eq(voterRegistrations.citizenId, citizen.id));
-    
+
     return registration || undefined;
   }
 
@@ -666,6 +691,28 @@ export class DatabaseStorage implements IStorage {
 
     const registration = await this.getVoterRegistration(aadharNumber);
     return registration?.status === "active";
+  }
+
+  // Death Certificate methods
+  async createDeathCertificate(cert: InsertDeathCertificate): Promise<DeathCertificate> {
+    const now = new Date().toISOString();
+    const [newCert] = await db
+      .insert(deathCertificates)
+      .values({
+        ...cert,
+        createdAt: now
+      })
+      .returning();
+    return newCert;
+  }
+
+  async getDeathCertificate(id: number): Promise<DeathCertificate | undefined> {
+    const [cert] = await db.select().from(deathCertificates).where(eq(deathCertificates.id, id));
+    return cert || undefined;
+  }
+
+  async getAllDeathCertificates(): Promise<DeathCertificate[]> {
+    return await db.select().from(deathCertificates);
   }
 }
 

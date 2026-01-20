@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { apiRequest } from "@/lib/queryClient";
 import { VoterRegistrationForm } from "@/components/voting/voter-registration-form";
 import { VotingForm } from "@/components/voting/voting-form";
 import { ElectionResults } from "@/components/voting/election-results";
@@ -13,6 +14,7 @@ import { LanguageSelectorButton } from "@/components/language-selector";
 import { SecurityChallenge } from "@/components/recaptcha";
 import { useLanguage } from "@/hooks/use-language";
 import { Vote, Users, TrendingUp, ArrowRight, Clock, AlertCircle, Globe, Shield } from "lucide-react";
+import type { Election } from "@shared/schema";
 
 type VotingSection = "register" | "vote" | "results";
 
@@ -30,56 +32,56 @@ export default function VotingPortal() {
   const [securityVerified, setSecurityVerified] = useState<boolean>(false);
   const [showAgeVerification, setShowAgeVerification] = useState<boolean>(true);
 
-  const { data: elections } = useQuery({
+  const { data: elections } = useQuery<Election[]>({
     queryKey: ['/api/elections'],
-    queryFn: () => fetch('/api/elections').then(res => res.json())
+    queryFn: () => apiRequest("GET", "/api/elections").then(res => res.json())
   });
+
+  const activeElections = elections?.filter(e => e.status === "active") || [];
 
   useEffect(() => {
     const updateTime = () => {
       // Use Indian Standard Time (IST)
-      const istTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+      const istTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
       const now = new Date(istTime);
       setCurrentTime(now);
-      
-      const activeElection = elections?.[0];
+
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
       const currentTimeInMinutes = currentHour * 60 + currentMinute;
-      
-      // Parse election timing
-      const votingStartTime = activeElection?.votingStartTime || "08:00";
-      const votingEndTime = activeElection?.votingEndTime || "17:00";
-      const resultsTime = activeElection?.resultsTime || "18:00";
-      
-      const [startHour, startMin] = votingStartTime.split(':').map(Number);
-      const [endHour, endMin] = votingEndTime.split(':').map(Number);
-      const [resultHour, resultMin] = resultsTime.split(':').map(Number);
-      
-      const startTimeInMinutes = startHour * 60 + startMin;
-      const endTimeInMinutes = endHour * 60 + endMin;
-      const resultTimeInMinutes = resultHour * 60 + resultMin;
-      
-      const isVotingTime = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes;
-      const canViewResults = currentTimeInMinutes >= resultTimeInMinutes;
-      
+
+      const isAnyVotingActive = activeElections.some((election: Election) => {
+        const votingStartTime = election.votingStartTime || "08:00";
+        const votingEndTime = election.votingEndTime || "17:00";
+        const [startH, startM] = votingStartTime.split(':').map(Number);
+        const [endH, endM] = votingEndTime.split(':').map(Number);
+        const startTimeInM = startH * 60 + startM;
+        const endTimeInM = endH * 60 + endM;
+        return currentTimeInMinutes >= startTimeInM && currentTimeInMinutes < endTimeInM;
+      });
+
+      const canViewAnyResults = activeElections.some((election: Election) => {
+        const resultsTime = election.resultsTime || "18:00";
+        const [resultH, resultM] = resultsTime.split(':').map(Number);
+        const resultTimeInM = resultH * 60 + resultM;
+        return currentTimeInMinutes >= resultTimeInM;
+      });
+
       let message = "";
-      if (currentTimeInMinutes < startTimeInMinutes) {
-        message = `Voting will start at ${votingStartTime}. Please come back during voting hours.`;
-      } else if (isVotingTime) {
-        message = "Voting is currently active. You can cast your vote now.";
-      } else if (currentTimeInMinutes >= endTimeInMinutes && currentTimeInMinutes < resultTimeInMinutes) {
-        message = `Voting has ended. Results will be available at ${resultsTime}.`;
+      if (activeElections.length === 0) {
+        message = "No elections are currently scheduled.";
+      } else if (isAnyVotingActive) {
+        message = "Voting is currently active for one or more elections. You can cast your vote now.";
       } else {
-        message = "Voting has ended. Election results are now available.";
+        message = "Check the schedule below for voting times and results.";
       }
-      
-      setVotingStatus({ isVotingTime, canViewResults, message });
+
+      setVotingStatus({ isVotingTime: isAnyVotingActive, canViewResults: canViewAnyResults, message });
     };
 
     updateTime();
     const interval = setInterval(updateTime, 60000); // Update every minute
-    
+
     return () => clearInterval(interval);
   }, [elections]);
 
@@ -120,21 +122,20 @@ export default function VotingPortal() {
                 <Vote className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">{t('digitalVotingPortal')}</h1>
-                <p className="text-sm text-gray-500">{t('governmentOfIndia')}</p>
+                <p className="text-lg font-bold text-gray-900 leading-tight">{t('governmentOfIndia')}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <LanguageSelectorButton />
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setLocation("/public")}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
               >
                 {t('publicPortal')}
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setLocation("/admin")}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
@@ -160,51 +161,71 @@ export default function VotingPortal() {
         </div>
 
         {/* Voting Schedule & Status */}
-        <div className="mb-8">
-          <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-6 h-6 text-blue-600" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{t('electionSchedule')}</h3>
-                    <p className="text-sm text-gray-600">
-                      {t('voteNow')}: {elections?.[0]?.votingStartTime || '08:00'} - {elections?.[0]?.votingEndTime || '17:00'} | {t('viewResultsTitle')}: {elections?.[0]?.resultsTime || '18:00'} onwards
-                    </p>
+        {/* Voting Schedule & Status */}
+        <div className="space-y-4 mb-8">
+          {activeElections.map((election: Election) => {
+            const now = new Date();
+            const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            const currentHour = istTime.getHours();
+            const currentMin = istTime.getMinutes();
+            const currentTimeInM = currentHour * 60 + currentMin;
+
+            const vStart = election.votingStartTime || "08:00";
+            const vEnd = election.votingEndTime || "17:00";
+            const rStart = election.resultsTime || "18:00";
+
+            const [sH, sM] = vStart.split(':').map(Number);
+            const [eH, eM] = vEnd.split(':').map(Number);
+            const isElectionActive = currentTimeInM >= (sH * 60 + sM) && currentTimeInM < (eH * 60 + eM);
+
+            return (
+              <Card key={election.id} className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center space-x-3">
+                      <Clock className="w-6 h-6 text-blue-600" />
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{election.title}</h3>
+                        <p className="text-sm text-gray-600">
+                          {t('voteNow')}: {vStart} - {vEnd} | {t('viewResultsTitle')}: {rStart} onwards
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">{t('currentTime')}</p>
+                        <p className="font-semibold text-gray-900">
+                          {currentTime.toLocaleTimeString('en-IN', {
+                            hour12: true,
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={isElectionActive ? "default" : "secondary"}
+                        className={isElectionActive ? "bg-green-600 font-bold px-4 py-1" : "font-bold px-4 py-1"}
+                      >
+                        {isElectionActive ? t('votingActive') : t('votingClosedStatus')}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">{t('currentTime')}</p>
-                    <p className="font-semibold text-gray-900">
-                      {currentTime.toLocaleTimeString('en-IN', { 
-                        hour12: true,
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                  <Badge 
-                    variant={votingStatus.isVotingTime ? "default" : "secondary"}
-                    className={votingStatus.isVotingTime ? "bg-green-600" : ""}
-                  >
-                    {votingStatus.isVotingTime ? t('votingActive') : t('votingClosedStatus')}
-                  </Badge>
-                </div>
-              </div>
-              <div className="mt-4 p-4 bg-white rounded-lg border border-blue-100">
-                <div className="flex items-start space-x-3">
-                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <p className="text-sm text-gray-700">{votingStatus.message}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          <div className="p-4 bg-white rounded-lg border border-blue-100 shadow-sm">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+              <p className="text-sm text-gray-700">{votingStatus.message}</p>
+            </div>
+          </div>
         </div>
 
         {/* Voting Options */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <Card 
+          <Card
             className="shadow-xl border-0 cursor-pointer hover:shadow-2xl transition-shadow duration-300"
             onClick={() => handleSectionSelect("register")}
           >
@@ -225,25 +246,22 @@ export default function VotingPortal() {
             </CardContent>
           </Card>
 
-          <Card 
-            className={`shadow-xl border-0 transition-all duration-300 ${
-              votingStatus.isVotingTime 
-                ? "cursor-pointer hover:shadow-2xl" 
-                : "opacity-60 cursor-not-allowed"
-            }`}
+          <Card
+            className={`shadow-xl border-0 transition-all duration-300 ${votingStatus.isVotingTime
+              ? "cursor-pointer hover:shadow-2xl"
+              : "opacity-60 cursor-not-allowed"
+              }`}
             onClick={() => handleSectionSelect("vote")}
           >
             <CardHeader className="text-center pb-4">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                votingStatus.isVotingTime 
-                  ? "bg-green-100" 
-                  : "bg-gray-100"
-              }`}>
-                <Vote className={`w-8 h-8 ${
-                  votingStatus.isVotingTime 
-                    ? "text-green-600" 
-                    : "text-gray-400"
-                }`} />
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${votingStatus.isVotingTime
+                ? "bg-green-100"
+                : "bg-gray-100"
+                }`}>
+                <Vote className={`w-8 h-8 ${votingStatus.isVotingTime
+                  ? "text-green-600"
+                  : "text-gray-400"
+                  }`} />
               </div>
               <CardTitle className="text-2xl font-bold text-gray-900">{t('castVoteTitle')}</CardTitle>
             </CardHeader>
@@ -251,12 +269,11 @@ export default function VotingPortal() {
               <p className="text-gray-600 mb-6">
                 {t('castVoteDesc')}
               </p>
-              <Button 
-                className={`w-full ${
-                  votingStatus.isVotingTime 
-                    ? "bg-green-600 hover:bg-green-700 text-white" 
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
+              <Button
+                className={`w-full ${votingStatus.isVotingTime
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
                 disabled={!votingStatus.isVotingTime}
               >
                 {votingStatus.isVotingTime ? t('voteNow') : t('votingClosed')}
@@ -311,15 +328,15 @@ export default function VotingPortal() {
               {t('currentElectionDescription')}
             </p>
             <div className="flex justify-center space-x-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-white text-white hover:bg-white hover:text-green-600"
                 onClick={() => handleSectionSelect("vote")}
               >
                 {t('voteNow')}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-white text-white hover:bg-white hover:text-blue-600"
                 onClick={() => handleSectionSelect("results")}
               >

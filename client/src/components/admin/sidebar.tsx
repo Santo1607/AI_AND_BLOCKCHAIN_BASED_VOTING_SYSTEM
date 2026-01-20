@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Users, UserPlus, FileText, Vote, Clock } from "lucide-react";
+import { BarChart3, Users, UserPlus, FileText, Vote, Clock, FileWarning } from "lucide-react";
 
-type AdminSection = "overview" | "citizens" | "add-citizen" | "candidates" | "elections" | "reports";
+type AdminSection = "overview" | "citizens" | "add-citizen" | "candidates" | "elections" | "reports" | "death-certificate" | "view-certificates";
 
 interface SidebarProps {
   currentSection: AdminSection;
@@ -46,6 +46,18 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
       label: "Reports",
       icon: FileText,
       description: "Generate reports"
+    },
+    {
+      id: "death-certificate" as AdminSection,
+      label: "Death Certificate",
+      icon: FileWarning,
+      description: "Generate death records"
+    },
+    {
+      id: "view-certificates" as AdminSection,
+      label: "View Certificates",
+      icon: FileText,
+      description: "Manage issued certificates"
     }
   ];
 
@@ -55,13 +67,13 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
         <h3 className="text-lg font-semibold text-gray-900">Admin Dashboard</h3>
         <p className="text-sm text-gray-500">Manage citizen records</p>
       </div>
-      
+
       <div className="p-4">
         <ul className="space-y-2">
           {navigationItems.map((item) => {
             const IconComponent = item.icon;
             const isActive = currentSection === item.id;
-            
+
             return (
               <li key={item.id}>
                 <Button
@@ -74,11 +86,11 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
                   )}
                   onClick={() => onSectionChange(item.id)}
                 >
-                  <IconComponent 
+                  <IconComponent
                     className={cn(
                       "w-5 h-5 mr-3",
                       isActive ? "text-blue-600" : "text-gray-500"
-                    )} 
+                    )}
                   />
                   <div>
                     <div className="font-medium">{item.label}</div>

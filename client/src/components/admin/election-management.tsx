@@ -10,85 +10,195 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Calendar, Clock, Settings, TrendingUp, Users, Vote, BarChart3, PieChart } from "lucide-react";
 import type { Election } from "@shared/schema";
+import { getStates, INDIAN_LOCATIONS } from "@/lib/locations";
 
-const constituencies = [
-  'Central Delhi', 'East Delhi', 'North Delhi', 'South Delhi', 'West Delhi',
-  'Mumbai North', 'Mumbai South', 'Mumbai Central', 
-  'Bangalore North', 'Bangalore South', 'Bangalore Central',
-  'Chennai North', 'Chennai South', 'Chennai Central',
-  'Coimbatore', 'Madurai', 'Salem', 'Tiruchirapalli', 'Tirunelveli',
-  'Vellore', 'Erode', 'Tiruppur', 'Dindigul', 'Thanjavur',
-  'Cuddalore', 'Nagapattinam', 'Mayiladuthurai', 'Ariyalur'
-];
+// Use dynamic constituencies from locations.ts instead of hardcoded list
+const constituencies = Object.values(INDIAN_LOCATIONS).flat().sort();
 
 export function ElectionManagement() {
+  const [selectedElectionId, setSelectedElectionId] = useState<number | null>(null);
   const [editingElection, setEditingElection] = useState<Election | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [electionTitle, setElectionTitle] = useState("");
+  const [electionDescription, setElectionDescription] = useState("");
+  const [electionStartDate, setElectionStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [electionEndDate, setElectionEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [blockchainAddress, setBlockchainAddress] = useState("0x1234567890123456789012345678901234567890");
   const [votingStartTime, setVotingStartTime] = useState("08:00");
   const [votingEndTime, setVotingEndTime] = useState("17:00");
   const [resultsTime, setResultsTime] = useState("18:00");
   const [selectedConstituency, setSelectedConstituency] = useState<string>("all");
+
+  // Location States
+  const [electionScope, setElectionScope] = useState<"State" | "Constituency">("State");
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedConstituencyFromList, setSelectedConstituencyFromList] = useState<string>("");
+  const [availableConstituencies, setAvailableConstituencies] = useState<string[]>([]);
+
   const { toast } = useToast();
 
-  const { data: elections, isLoading: electionsLoading } = useQuery({
+  const handleStateChange = (state: string) => {
+    setSelectedState(state);
+    setAvailableConstituencies(INDIAN_LOCATIONS[state] || []);
+    setSelectedConstituencyFromList("");
+  };
+
+  const { data: elections, isLoading: electionsLoading } = useQuery<Election[]>({
     queryKey: ['/api/elections'],
     queryFn: () => apiRequest("GET", "/api/elections").then(res => res.json())
   });
 
+  // Set default selected election if not set
+  if (!selectedElectionId && elections && elections.length > 0) {
+    setSelectedElectionId(elections[0].id);
+  }
+
   const { data: constituencyResults, isLoading: resultsLoading } = useQuery({
-    queryKey: ['/api/elections/1/constituency-results'],
+    queryKey: [`/api/elections/${selectedElectionId}/constituency-results`],
     queryFn: async () => {
+      if (!selectedElectionId) return null;
       try {
-        const response = await apiRequest("GET", "/api/elections/1/constituency-results");
+        const response = await apiRequest("GET", `/api/elections/${selectedElectionId}/constituency-results`);
         return await response.json();
       } catch (error) {
         return { constituencyResults: {}, overallWinner: null, totalVotes: 0 };
       }
-    }
+    },
+    enabled: !!selectedElectionId
   });
 
   const updateElectionMutation = useMutation({
-    mutationFn: async (data: { id: number; timings: any }) => {
-      const response = await apiRequest("PATCH", `/api/elections/${data.id}`, data.timings);
+    mutationFn: async (data: { id: number; updates: any }) => {
+      const response = await apiRequest("PATCH", `/api/elections/${data.id}`, data.updates);
       if (!response.ok) throw new Error('Failed to update election');
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/elections'] });
-      toast({ title: 'Success', description: 'Election timings updated successfully' });
+      toast({ title: 'Success', description: 'Election updated successfully' });
       setEditingElection(null);
     },
     onError: () => {
-      toast({ title: 'Error', description: 'Failed to update election timings', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to update election', variant: 'destructive' });
     }
   });
 
-  const handleSaveTimings = () => {
+  const createElectionMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/elections", data);
+      if (!response.ok) throw new Error('Failed to create election');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/elections'] });
+      toast({ title: 'Success', description: 'New election created successfully' });
+      setIsCreating(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to create election', variant: 'destructive' });
+    }
+  });
+
+  const handleSaveElection = () => {
     if (!editingElection) return;
-    
+
     updateElectionMutation.mutate({
       id: editingElection.id,
-      timings: {
+      updates: {
+        title: electionTitle,
+        description: electionDescription,
+        startDate: electionStartDate,
+        endDate: electionEndDate,
         votingStartTime,
         votingEndTime,
-        resultsTime
+        resultsTime,
+        blockchainAddress
       }
     });
   };
 
+  const handleCreateElection = () => {
+    if (!selectedState) {
+      toast({ title: 'Error', description: 'Please select a state', variant: 'destructive' });
+      return;
+    }
+    if (electionScope === "Constituency" && !selectedConstituencyFromList) {
+      toast({ title: 'Error', description: 'Please select a constituency', variant: 'destructive' });
+      return;
+    }
+
+    createElectionMutation.mutate({
+      title: electionTitle,
+      description: electionDescription,
+      startDate: electionStartDate,
+      endDate: electionEndDate,
+      votingStartTime,
+      votingEndTime,
+      resultsTime,
+      blockchainAddress,
+      status: 'upcoming',
+      electionScope,
+      state: selectedState,
+      constituency: electionScope === "Constituency" ? selectedConstituencyFromList : null
+    });
+  };
+
+  const startEditing = (election: Election) => {
+    setEditingElection(election);
+    setElectionTitle(election.title);
+    setElectionDescription(election.description);
+    setElectionStartDate(election.startDate);
+    setElectionEndDate(election.endDate);
+    setVotingStartTime(election.votingStartTime || "08:00");
+    setVotingEndTime(election.votingEndTime || "17:00");
+    setResultsTime(election.resultsTime || "18:00");
+    setBlockchainAddress(election.blockchainAddress || "0x1234567890123456789012345678901234567890");
+  };
+
+  const startCreating = () => {
+    setIsCreating(true);
+    setElectionTitle("");
+    setElectionDescription("");
+    setElectionStartDate(new Date().toISOString().split('T')[0]);
+    setElectionEndDate(new Date().toISOString().split('T')[0]);
+    setVotingStartTime("08:00");
+    setVotingEndTime("17:00");
+    setResultsTime("18:00");
+    setBlockchainAddress("0x1234567890123456789012345678901234567890");
+  };
+
+  const currentElection = elections?.find(e => e.id === selectedElectionId);
+
   // Time status calculation
   const getCurrentTimeStatus = () => {
+    if (!currentElection) {
+      return { status: 'pending', message: 'No election selected', color: 'bg-gray-500' };
+    }
+
     const now = new Date();
-    const currentHour = now.getHours();
-    
-    const votingStart = 8; // 8 AM
-    const votingEnd = 17; // 5 PM
-    const resultsStart = 18; // 6 PM
-    
-    if (currentHour < votingStart) {
+    // Use Indian Standard Time (IST)
+    const istNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const currentHour = istNow.getHours();
+    const currentMin = istNow.getMinutes();
+    const currentTimeInMin = currentHour * 60 + currentMin;
+
+    const votingStartTimeStr = currentElection.votingStartTime || "08:00";
+    const votingEndTimeStr = currentElection.votingEndTime || "17:00";
+    const resultsTimeStr = currentElection.resultsTime || "18:00";
+
+    const [vStartH, vStartM] = votingStartTimeStr.split(':').map(Number);
+    const [vEndH, vEndM] = votingEndTimeStr.split(':').map(Number);
+    const [rStartH, rStartM] = resultsTimeStr.split(':').map(Number);
+
+    const votingStartInMin = vStartH * 60 + vStartM;
+    const votingEndInMin = vEndH * 60 + vEndM;
+    const resultsStartInMin = rStartH * 60 + rStartM;
+
+    if (currentTimeInMin < votingStartInMin) {
       return { status: 'pending', message: 'Voting not yet started', color: 'bg-gray-500' };
-    } else if (currentHour >= votingStart && currentHour < votingEnd) {
+    } else if (currentTimeInMin >= votingStartInMin && currentTimeInMin < votingEndInMin) {
       return { status: 'active', message: 'Voting in progress', color: 'bg-green-600' };
-    } else if (currentHour >= votingEnd && currentHour < resultsStart) {
+    } else if (currentTimeInMin >= votingEndInMin && currentTimeInMin < resultsStartInMin) {
       return { status: 'ended', message: 'Voting ended, results pending', color: 'bg-orange-600' };
     } else {
       return { status: 'results', message: 'Results available', color: 'bg-blue-600' };
@@ -104,7 +214,7 @@ export function ElectionManagement() {
 
   const getPartyWiseResults = (constituencyResults: any) => {
     const partyStats = new Map<string, { votes: number; constituencies: number; candidates: string[] }>();
-    
+
     Object.values(constituencyResults.constituencyResults || {}).forEach((candidates: any) => {
       candidates.forEach((candidate: any) => {
         if (!partyStats.has(candidate.party)) {
@@ -130,7 +240,7 @@ export function ElectionManagement() {
 
   const getFilteredResults = () => {
     if (!constituencyResults) return null;
-    
+
     if (selectedConstituency === "all") {
       return constituencyResults.constituencyResults;
     } else {
@@ -141,16 +251,164 @@ export function ElectionManagement() {
     }
   };
 
-  if (electionsLoading) {
-    return <div className="text-center py-8">Loading elections...</div>;
-  }
-
-  const activeElection = elections?.[0];
   const partyStats = constituencyResults ? getPartyWiseResults(constituencyResults) : [];
   const filteredResults = getFilteredResults();
 
   return (
     <div className="space-y-6">
+      {/* Election Selector & Actions */}
+      <div className="flex justify-between items-center bg-white p-4 rounded-lg border shadow-sm">
+        <div className="flex items-center space-x-4">
+          <Vote className="w-6 h-6 text-blue-600" />
+          <h3 className="text-xl font-bold text-gray-900">Manage Election:</h3>
+          <Select
+            value={selectedElectionId?.toString()}
+            onValueChange={(val) => setSelectedElectionId(parseInt(val))}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select Election" />
+            </SelectTrigger>
+            <SelectContent>
+              {elections?.map(election => (
+                <SelectItem key={election.id} value={election.id.toString()}>
+                  {election.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={startCreating} className="bg-green-600 hover:bg-green-700">
+          <Vote className="w-4 h-4 mr-2" />
+          Create New Election
+        </Button>
+      </div>
+
+      {isCreating && (
+        <Card className="border-2 border-green-200 shadow-lg">
+          <CardHeader className="bg-green-50">
+            <CardTitle>Create New Election</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-title">Election Title</Label>
+                  <Input id="create-title" value={electionTitle} onChange={(e) => setElectionTitle(e.target.value)} placeholder="e.g. 2024 General Elections" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-blockchain">Blockchain Contract Address</Label>
+                  <Input id="create-blockchain" value={blockchainAddress} onChange={(e) => setBlockchainAddress(e.target.value)} placeholder="0x..." />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-desc">Description</Label>
+                <textarea
+                  id="create-desc"
+                  className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={electionDescription}
+                  onChange={(e) => setElectionDescription(e.target.value)}
+                  placeholder="Describe the election purpose and scope..."
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-start">Start Date</Label>
+                  <Input id="create-start" type="date" value={electionStartDate} onChange={(e) => setElectionStartDate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-end">End Date</Label>
+                  <Input id="create-end" type="date" value={electionEndDate} onChange={(e) => setElectionEndDate(e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-v-start">Voting Start Time</Label>
+                  <Input id="create-v-start" type="time" value={votingStartTime} onChange={(e) => setVotingStartTime(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-v-end">Voting End Time</Label>
+                  <Input id="create-v-end" type="time" value={votingEndTime} onChange={(e) => setVotingEndTime(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-r-start">Results Time</Label>
+                  <Input id="create-r-start" type="time" value={resultsTime} onChange={(e) => setResultsTime(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-4 border-t pt-4 mt-4">
+                <h4 className="font-semibold text-gray-900">Election Location & Scope</h4>
+
+                <div className="space-y-2">
+                  <Label>Election Scope</Label>
+                  <div className="flex space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="scope-state"
+                        value="State"
+                        checked={electionScope === "State"}
+                        onChange={(e) => setElectionScope(e.target.value as "State" | "Constituency")}
+                        className="w-4 h-4 text-green-600"
+                      />
+                      <Label htmlFor="scope-state">State Level</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="scope-constituency"
+                        value="Constituency"
+                        checked={electionScope === "Constituency"}
+                        onChange={(e) => setElectionScope(e.target.value as "State" | "Constituency")}
+                        className="w-4 h-4 text-green-600"
+                      />
+                      <Label htmlFor="scope-constituency">Constituency Level</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="create-state">State</Label>
+                    <Select value={selectedState} onValueChange={handleStateChange}>
+                      <SelectTrigger id="create-state">
+                        <SelectValue placeholder="Select State" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getStates().map(state => (
+                          <SelectItem key={state} value={state}>{state}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {electionScope === "Constituency" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="create-constituency">Constituency</Label>
+                      <Select value={selectedConstituencyFromList} onValueChange={setSelectedConstituencyFromList}>
+                        <SelectTrigger id="create-constituency" disabled={!selectedState}>
+                          <SelectValue placeholder="Select Constituency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableConstituencies.map(c => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex space-x-3 pt-6 border-t mt-4">
+                <Button onClick={handleCreateElection} className="bg-green-600 hover:bg-green-700 w-full md:w-auto" disabled={createElectionMutation.isPending}>
+                  {createElectionMutation.isPending ? 'Creating...' : 'Launch Election'}
+                </Button>
+                <Button variant="outline" onClick={() => setIsCreating(false)} className="w-full md:w-auto">Cancel</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Election Status Overview */}
       <Card>
         <CardHeader>
@@ -168,13 +426,12 @@ export function ElectionManagement() {
               <h3 className="text-lg font-semibold text-gray-900">Current Status</h3>
               <p className="text-gray-600">{timeStatus.message}</p>
               <div className="mt-2">
-                <Badge 
+                <Badge
                   variant={timeStatus.status === 'active' ? 'default' : 'secondary'}
-                  className={`${
-                    timeStatus.status === 'active' ? 'bg-green-600' : 
-                    timeStatus.status === 'results' ? 'bg-blue-600' : 
-                    timeStatus.status === 'ended' ? 'bg-orange-600' : 'bg-gray-500'
-                  } text-white`}
+                  className={`${timeStatus.status === 'active' ? 'bg-green-600' :
+                    timeStatus.status === 'results' ? 'bg-blue-600' :
+                      timeStatus.status === 'ended' ? 'bg-orange-600' : 'bg-gray-500'
+                    } text-white`}
                 >
                   {timeStatus.status.toUpperCase()}
                 </Badge>
@@ -191,7 +448,7 @@ export function ElectionManagement() {
                 <p>Results: 6:00 PM onwards</p>
               </div>
               <div className="mt-2">
-                <Badge 
+                <Badge
                   variant="outline"
                   className="border-purple-600 text-purple-600"
                 >
@@ -201,56 +458,70 @@ export function ElectionManagement() {
             </div>
 
             <div className="text-center">
-              <Button 
-                onClick={() => setEditingElection(activeElection)}
+              <Button
+                onClick={() => startEditing(currentElection!)}
                 className="w-full"
-                disabled={!activeElection}
+                disabled={!currentElection}
               >
                 <Settings className="w-4 h-4 mr-2" />
-                Edit Timings
+                Configure Details
               </Button>
             </div>
           </div>
 
           {editingElection && (
-            <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
-              <h3 className="text-lg font-semibold mb-4">Edit Election Timings</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="votingStart">Voting Start Time</Label>
-                  <Input
-                    id="votingStart"
-                    type="time"
-                    value={votingStartTime}
-                    onChange={(e) => setVotingStartTime(e.target.value)}
+            <div className="mt-6 p-6 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-lg font-semibold mb-4 text-blue-900">Configure Election Details</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-title">Election Title</Label>
+                    <Input id="edit-title" value={electionTitle} onChange={(e) => setElectionTitle(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-blockchain">Blockchain Address</Label>
+                    <Input id="edit-blockchain" value={blockchainAddress} onChange={(e) => setBlockchainAddress(e.target.value)} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-desc">Description</Label>
+                  <textarea
+                    id="edit-desc"
+                    className="w-full min-h-[80px] p-3 rounded-md border border-input bg-background text-sm"
+                    value={electionDescription}
+                    onChange={(e) => setElectionDescription(e.target.value)}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="votingEnd">Voting End Time</Label>
-                  <Input
-                    id="votingEnd"
-                    type="time"
-                    value={votingEndTime}
-                    onChange={(e) => setVotingEndTime(e.target.value)}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-start">Start Date</Label>
+                    <Input id="edit-start" type="date" value={electionStartDate} onChange={(e) => setElectionStartDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-end">End Date</Label>
+                    <Input id="edit-end" type="date" value={electionEndDate} onChange={(e) => setElectionEndDate(e.target.value)} />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="resultsTime">Results Available Time</Label>
-                  <Input
-                    id="resultsTime"
-                    type="time"
-                    value={resultsTime}
-                    onChange={(e) => setResultsTime(e.target.value)}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="edit-vstart">Voting Start</Label>
+                    <Input id="edit-vstart" type="time" value={votingStartTime} onChange={(e) => setVotingStartTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-vend">Voting End</Label>
+                    <Input id="edit-vend" type="time" value={votingEndTime} onChange={(e) => setVotingEndTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-rtime">Results Time</Label>
+                    <Input id="edit-rtime" type="time" value={resultsTime} onChange={(e) => setResultsTime(e.target.value)} />
+                  </div>
                 </div>
-              </div>
-              <div className="flex space-x-3 mt-4">
-                <Button onClick={handleSaveTimings} disabled={updateElectionMutation.isPending}>
-                  {updateElectionMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-                <Button variant="outline" onClick={() => setEditingElection(null)}>
-                  Cancel
-                </Button>
+                <div className="flex space-x-3 mt-4">
+                  <Button onClick={handleSaveElection} disabled={updateElectionMutation.isPending}>
+                    {updateElectionMutation.isPending ? 'Saving...' : 'Update Configuration'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setEditingElection(null)}>Cancel</Button>
+                </div>
               </div>
             </div>
           )}
@@ -330,9 +601,8 @@ export function ElectionManagement() {
                     <div className="p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {partyStats.map((party, index) => (
-                          <div key={party.party} className={`p-4 rounded-lg border ${
-                            index === 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                          }`}>
+                          <div key={party.party} className={`p-4 rounded-lg border ${index === 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                            }`}>
                             <div className="flex items-center justify-between mb-2">
                               <h5 className="font-semibold text-gray-900">{party.party}</h5>
                               {index === 0 && <Badge className="bg-green-600">Leading</Badge>}
@@ -366,13 +636,13 @@ export function ElectionManagement() {
                       <span className="font-semibold text-blue-900">Total Votes Cast</span>
                     </div>
                     <p className="text-2xl font-bold text-blue-900 mt-2">
-                      {selectedConstituency === "all" ? constituencyResults.totalVotes : 
-                       (() => {
-                         if (!filteredResults) return 0;
-                         const constituencyData = Object.values(filteredResults)[0] as any[];
-                         if (!constituencyData || !Array.isArray(constituencyData)) return 0;
-                         return constituencyData.reduce((sum: number, c: any) => sum + (c?.voteCount || 0), 0);
-                       })()}
+                      {selectedConstituency === "all" ? constituencyResults.totalVotes :
+                        (() => {
+                          if (!filteredResults) return 0;
+                          const constituencyData = Object.values(filteredResults)[0] as any[];
+                          if (!constituencyData || !Array.isArray(constituencyData)) return 0;
+                          return constituencyData.reduce((sum: number, c: any) => sum + (c?.voteCount || 0), 0);
+                        })()}
                     </p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
@@ -413,14 +683,12 @@ export function ElectionManagement() {
                         <div className="p-4">
                           <div className="space-y-3">
                             {candidates.map((candidate: any, index: number) => (
-                              <div key={candidate.candidateId} className={`p-4 rounded-lg border ${
-                                candidate.isWinner ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                              }`}>
+                              <div key={candidate.candidateId} className={`p-4 rounded-lg border ${candidate.isWinner ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                }`}>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                                      candidate.isWinner ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'
-                                    }`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${candidate.isWinner ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'
+                                      }`}>
                                       {index + 1}
                                     </div>
                                     <div>

@@ -58,17 +58,19 @@ export default function PublicPortal() {
                 <p className="text-sm text-gray-500">Government of India</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <LanguageSelectorButton />
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/voting")}
-                className="text-green-600 border-green-200 hover:bg-green-50"
-              >
-                {t('votingPortal')}
-              </Button>
-              <Button 
+              {verificationResult && (
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation("/voting")}
+                  className="text-green-600 border-green-200 hover:bg-green-50"
+                >
+                  {t('votingPortal')}
+                </Button>
+              )}
+              <Button
                 variant="outline"
                 onClick={() => setLocation("/admin")}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
@@ -87,7 +89,7 @@ export default function PublicPortal() {
           <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Search className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t('publicPortal')} {t('aadharVerification')}</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t('publicPortal')}</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             {t('verifyAadhar')} - {t('ageRequirement')}
           </p>
@@ -96,7 +98,7 @@ export default function PublicPortal() {
         {/* Age Verification Step */}
         {showAgeVerification && !ageVerified && (
           <div className="flex justify-center mb-8">
-            <AgeVerification 
+            <AgeVerification
               onVerified={handleAgeVerification}
               title={t('ageVerificationRequired')}
             />
@@ -106,7 +108,7 @@ export default function PublicPortal() {
         {/* Security Challenge Step */}
         {ageVerified && !securityVerified && (
           <div className="flex justify-center mb-8">
-            <SecurityChallenge 
+            <SecurityChallenge
               onVerified={handleSecurityVerification}
               size="normal"
             />
@@ -129,8 +131,8 @@ export default function PublicPortal() {
 
         {/* Verification Result */}
         {verificationResult && (
-          <VerificationResult 
-            citizen={verificationResult} 
+          <VerificationResult
+            citizen={verificationResult}
             onNewSearch={handleNewSearch}
           />
         )}
@@ -182,9 +184,9 @@ export default function PublicPortal() {
               <div>
                 <h4 className="font-medium text-blue-900 mb-2">Important Information</h4>
                 <p className="text-sm text-blue-800">
-                  This verification portal is for informational purposes only. For official government 
-                  documents, certificates, or any legal proceedings, please visit your nearest Aadhar 
-                  enrollment center with original documents. This system provides real-time access to 
+                  This verification portal is for informational purposes only. For official government
+                  documents, certificates, or any legal proceedings, please visit your nearest Aadhar
+                  enrollment center with original documents. This system provides real-time access to
                   our centralized database for verification purposes.
                 </p>
               </div>

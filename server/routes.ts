@@ -11,9 +11,9 @@ declare module "express-session" {
 }
 import { storage } from "./storage";
 import { db } from "./db";
-import { 
-  loginSchema, 
-  insertCitizenSchema, 
+import {
+  loginSchema,
+  insertCitizenSchema,
   verificationSchema,
   insertElectionSchema,
   insertCandidateSchema,
@@ -25,16 +25,28 @@ import multer from "multer";
 import path from "path";
 
 // Configure multer for file uploads
+const multerStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
 const upload = multer({
-  dest: 'uploads/',
+  storage: multerStorage,
   limits: {
-    fileSize: 2 * 1024 * 1024 // 2MB limit
+    fileSize: 5 * 1024 * 1024 // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    // Allow images and PDFs
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error('Only image and PDF files are allowed'));
     }
   }
 });
@@ -45,11 +57,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const loginData = loginSchema.parse(req.body);
       const admin = await storage.getAdminByUsername(loginData.username);
-      
+
       if (admin && admin.password === loginData.password && admin.isActive) {
         // Store admin ID in session
         (req.session as any).adminId = admin.id;
-        
+
         res.json({
           success: true,
           admin: {
@@ -93,6 +105,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Death Certificate Generation
+  app.post("/api/death-certificate", upload.fields([
+    { name: 'medicalCertificate', maxCount: 1 },
+    { name: 'aadharProof', maxCount: 1 }
+  ]), async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const {
+        aadharNumber,
+        dateOfBirth,
+        name,
+        fatherHusbandName,
+        motherName,
+        gender,
+        age,
+        dateOfDeath,
+        placeOfDeath,
+        permanentAddress,
+        addressAtDeath,
+        remarks,
+        zone,
+        division
+      } = req.body;
+
+      if (!aadharNumber || !dateOfBirth) {
+        return res.status(400).json({ message: "Aadhar number and Date of Birth are required" });
+      }
+
+      // Verify citizen exists
+      const citizen = await storage.verifyCitizen(aadharNumber, dateOfBirth);
+
+      if (!citizen) {
+        return res.status(404).json({ message: "Citizen not found. Please verify Aadhar Number and Date of Birth." });
+      }
+
+      // Generate a registration number: YEAR/ZONE/DIVISION/RANDOM
+      const year = new Date().getFullYear();
+      const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+      const registrationNumber = `${year}/${zone}/${division}/${randomSuffix}`;
+
+      // Create death certificate record
+      const deathCert = await storage.createDeathCertificate({
+        aadharNumber,
+        name,
+        fatherHusbandName,
+        motherName,
+        gender,
+        age,
+        dateOfDeath,
+        placeOfDeath,
+        permanentAddress,
+        addressAtDeath,
+        registrationNumber,
+        dateOfRegistration: new Date().toISOString().split('T')[0],
+        dateOfIssue: new Date().toISOString().split('T')[0],
+        remarks: remarks || "",
+        zone,
+        division
+      });
+
+      // Delete citizen record
+      const deleted = await storage.deleteCitizen(citizen.id);
+
+      if (deleted) {
+        res.json({
+          success: true,
+          message: `Death certificate generated for ${citizen.name}. Citizen record has been deleted.`,
+          certificate: deathCert
+        });
+      } else {
+        res.status(500).json({ message: "Failed to delete citizen record" });
+      }
+
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/death-certificates", async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const certificates = await storage.getAllDeathCertificates();
+      res.json(certificates);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Citizens CRUD operations
   app.get("/api/citizens", async (req, res) => {
     const adminId = (req.session as any)?.adminId;
@@ -122,11 +230,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const citizen = await storage.getCitizen(id);
-      
+
       if (!citizen) {
         return res.status(404).json({ message: "Citizen not found" });
       }
-      
+
       res.json(citizen);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -141,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const citizenData = insertCitizenSchema.parse(req.body);
-      
+
       // Handle photo upload
       if (req.file) {
         citizenData.photoUrl = `/uploads/${req.file.filename}`;
@@ -170,11 +278,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const citizen = await storage.updateCitizen(id, updateData);
-      
+
       if (!citizen) {
         return res.status(404).json({ message: "Citizen not found" });
       }
-      
+
       res.json(citizen);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -190,11 +298,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteCitizen(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Citizen not found" });
       }
-      
+
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -205,28 +313,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/check-dob", async (req, res) => {
     try {
       const { dateOfBirth } = req.body;
-      
+
       if (!dateOfBirth) {
-        return res.status(400).json({ 
-          exists: false, 
-          message: "Date of birth is required" 
+        return res.status(400).json({
+          exists: false,
+          message: "Date of birth is required"
         });
       }
-      
+
       // Check if any citizen has this date of birth
       const allCitizens = await storage.getAllCitizens();
       const citizenExists = allCitizens.some(citizen => citizen.dateOfBirth === dateOfBirth);
-      
-      res.json({ 
+
+      res.json({
         exists: citizenExists,
-        message: citizenExists 
-          ? "Date of birth found in records" 
+        message: citizenExists
+          ? "Date of birth found in records"
           : "Date of birth not found in our records"
       });
     } catch (error: any) {
-      res.status(500).json({ 
-        exists: false, 
-        message: error.message 
+      res.status(500).json({
+        exists: false,
+        message: error.message
       });
     }
   });
@@ -235,42 +343,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/verify", async (req, res) => {
     try {
       const verificationData = verificationSchema.parse(req.body);
-      
+
       // First check if Aadhar number exists in database
       const citizen = await storage.getCitizenByAadhar(verificationData.aadharNumber);
-      
+
       if (!citizen) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Aadhar number not found in our records. Please contact admin to register first." 
+        return res.status(404).json({
+          success: false,
+          message: "Aadhar number not found in our records. Please contact admin to register first."
         });
       }
-      
+
       // Check if the entered date of birth matches the registered record
       if (citizen.dateOfBirth !== verificationData.dateOfBirth) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Date of birth does not match our records. Please enter the correct date of birth." 
+        return res.status(400).json({
+          success: false,
+          message: "Date of birth does not match our records. Please enter the correct date of birth."
         });
       }
-      
+
       // Calculate age to check 18+ requirement
       const birthDate = new Date(verificationData.dateOfBirth);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
+
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
       }
-      
+
       if (age < 18) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "You must be 18 years or older to access this portal. Current age: " + age + " years." 
+        return res.status(400).json({
+          success: false,
+          message: "You must be 18 years or older to access this portal. Current age: " + age + " years."
         });
       }
-      
+
       // Verification successful - return citizen data without sensitive info
       res.json({
         success: true,
@@ -280,6 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dateOfBirth: citizen.dateOfBirth,
           gender: citizen.gender,
           address: citizen.address,
+          state: citizen.state,
           district: citizen.district,
           constituency: citizen.constituency,
           pincode: citizen.pincode,
@@ -304,7 +413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const allCitizens = await storage.getAllCitizens();
       const totalCitizens = allCitizens.length;
-      
+
       // Mock additional stats for demo
       res.json({
         totalCitizens,
@@ -333,11 +442,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const election = await storage.getElection(id);
-      
+
       if (!election) {
         return res.status(404).json({ message: "Election not found" });
       }
-      
+
       res.json(election);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -376,10 +485,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/voter/register", async (req, res) => {
     try {
       const registrationData = voterRegistrationSchema.parse(req.body);
-      const registration = await storage.registerVoter(registrationData);
+      const result = await storage.registerVoter(registrationData);
       res.status(201).json({
         success: true,
-        voterIdNumber: registration.voterIdNumber,
+        ...result,
         message: "Voter registration successful"
       });
     } catch (error: any) {
@@ -391,14 +500,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { aadharNumber, dateOfBirth } = verificationSchema.parse(req.body);
       const isEligible = await storage.isEligibleToVote(aadharNumber, dateOfBirth);
-      
+
       if (isEligible) {
         const registration = await storage.getVoterRegistration(aadharNumber);
-        res.json({
-          eligible: true,
-          voterIdNumber: registration?.voterIdNumber,
-          message: "You are eligible to vote"
-        });
+
+        if (registration && registration.status === "active") {
+          res.json({
+            eligible: true,
+            message: "Voter is eligible to vote."
+          });
+        } else {
+          res.json({
+            eligible: false,
+            message: "Aadhar number is not registered for voting."
+          });
+        }
       } else {
         res.json({
           eligible: false,
@@ -413,29 +529,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Voting with blockchain integration
   app.post("/api/vote", async (req, res) => {
     try {
+      console.log('--- VOTE REQUEST RECEIVED ---');
+      console.log('Body:', req.body);
+
+      const electionId = typeof req.body.electionId === 'string' ? parseInt(req.body.electionId) : req.body.electionId;
+      const candidateId = typeof req.body.candidateId === 'string' ? parseInt(req.body.candidateId) : req.body.candidateId;
+
+      if (!electionId || !candidateId) {
+        console.error('Missing electionId or candidateId');
+        return res.status(400).json({ success: false, message: "Election ID and Candidate ID are required" });
+      }
+
       // Get election timing settings
-      const election = await storage.getElection(1); // Active election
-      
+      const election = await storage.getElection(electionId);
+      if (!election) {
+        console.error(`Election not found: ${electionId}`);
+        return res.status(404).json({ success: false, message: "Election not found" });
+      }
+
       // Use Indian Standard Time (IST)
-      const istTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+      const istTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
       const currentTime = new Date(istTime);
       const currentHour = currentTime.getHours();
       const currentMinute = currentTime.getMinutes();
       const currentTimeInMinutes = currentHour * 60 + currentMinute;
-      
+
       // Parse election timing
-      const votingStartTime = election?.votingStartTime || "08:00";
-      const votingEndTime = election?.votingEndTime || "17:00";
-      
+      const votingStartTime = election.votingStartTime || "08:00";
+      const votingEndTime = election.votingEndTime || "17:00";
+
       const [startHour, startMin] = votingStartTime.split(':').map(Number);
       const [endHour, endMin] = votingEndTime.split(':').map(Number);
-      
+
       const startTimeInMinutes = startHour * 60 + startMin;
       const endTimeInMinutes = endHour * 60 + endMin;
-      
+
+      console.log(`Current Time: ${currentHour}:${currentMinute} (${currentTimeInMinutes}m)`);
+      console.log(`Voting Window: ${votingStartTime} - ${votingEndTime} (${startTimeInMinutes}m - ${endTimeInMinutes}m)`);
+
       if (currentTimeInMinutes < startTimeInMinutes || currentTimeInMinutes >= endTimeInMinutes) {
-        return res.status(403).json({ 
-          success: false, 
+        console.error('Voting outside allowed hours');
+        return res.status(403).json({
+          success: false,
           message: `Voting is only allowed between ${votingStartTime} and ${votingEndTime}. Please come back during voting hours.`,
           votingHours: `${votingStartTime} - ${votingEndTime}`,
           currentTime: `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
@@ -443,42 +578,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const voteData = {
-        ...req.body,
+        electionId,
+        candidateId,
+        voterAadhar: req.body.voterAadhar,
         blockchainHash: req.body.blockchainHash || null,
         transactionHash: req.body.transactionHash || null
       };
-      
+
       // Check if voter is eligible
       const citizen = await storage.getCitizenByAadhar(voteData.voterAadhar);
       if (!citizen) {
+        console.error(`Voter not found: ${voteData.voterAadhar}`);
         return res.status(404).json({ success: false, message: "Voter not found" });
       }
 
       const isEligible = await storage.isEligibleToVote(voteData.voterAadhar, citizen.dateOfBirth);
       if (!isEligible) {
+        console.error('Voter not eligible');
         return res.status(403).json({ success: false, message: "Not eligible to vote" });
       }
 
       // Check if already voted
       const hasVoted = await storage.hasVoted(voteData.electionId, voteData.voterAadhar);
       if (hasVoted) {
+        console.error('Already voted');
         return res.status(409).json({ success: false, message: "You have already voted in this election" });
       }
 
       // Validate blockchain proof if provided
       if (voteData.blockchainHash && !voteData.transactionHash) {
+        console.error('Blockchain proof incomplete');
         return res.status(400).json({ success: false, message: "Blockchain verification incomplete" });
       }
 
-      const vote = await storage.castVote({
-        electionId: voteData.electionId,
-        candidateId: voteData.candidateId,
-        voterAadhar: voteData.voterAadhar,
-        blockchainHash: voteData.blockchainHash,
-        transactionHash: voteData.transactionHash
-      });
+      console.log('Casting vote in DB...');
+      const vote = await storage.castVote(voteData);
+      console.log('Vote cast successfully, ID:', vote.id);
       res.json({ success: true, message: "Vote cast successfully", voteId: vote.id });
     } catch (error: any) {
+      console.error('Vote casting error:', error);
       res.status(400).json({ success: false, message: error.message });
     }
   });
@@ -496,16 +634,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Candidate management routes
   app.get("/api/candidates", async (req, res) => {
     try {
-      const { constituency } = req.query;
+      const { constituency, electionId } = req.query;
       let candidates;
-      
+
+      const eid = electionId ? parseInt(electionId as string) : 1;
+
       if (constituency) {
-        candidates = await storage.getCandidatesByElection(1); // Current election
+        candidates = await storage.getCandidatesByElection(eid);
         candidates = candidates.filter(c => c.constituency === constituency);
       } else {
-        candidates = await storage.getCandidatesByElection(1);
+        candidates = await storage.getCandidatesByElection(eid);
       }
-      
+
       res.json(candidates);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -586,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const candidateId = parseInt(req.params.id);
       const success = await storage.deleteCandidate(candidateId);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Candidate not found" });
       }
@@ -598,6 +738,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Election management routes
+  app.get("/api/admin/elections", async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    try {
+      const elections = await storage.getAllElections();
+      res.json(elections);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/elections", async (req, res) => {
+    const adminId = (req as any).session?.adminId;
+    if (!adminId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const election = await storage.createElection(req.body);
+      res.status(201).json(election);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.patch("/api/elections/:id", async (req, res) => {
     const adminId = (req as any).session?.adminId;
     if (!adminId) {
@@ -613,6 +780,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.resultsTime) updateData.resultsTime = req.body.resultsTime;
       if (req.body.title) updateData.title = req.body.title;
       if (req.body.description) updateData.description = req.body.description;
+      if (req.body.startDate) updateData.startDate = req.body.startDate;
+      if (req.body.endDate) updateData.endDate = req.body.endDate;
+      if (req.body.status) updateData.status = req.body.status;
+      if (req.body.blockchainAddress) updateData.blockchainAddress = req.body.blockchainAddress;
 
       const election = await storage.updateElection(electionId, updateData);
       if (!election) {
@@ -636,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const electionId = parseInt(req.params.electionId);
       const election = await storage.getElection(electionId);
-      
+
       if (!election) {
         return res.status(404).json({ message: "Election not found" });
       }
@@ -660,7 +831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const electionId = parseInt(req.params.electionId);
       const election = await storage.getElection(electionId);
-      
+
       if (!election) {
         return res.status(404).json({ message: "Election not found" });
       }
@@ -678,19 +849,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const electionId = parseInt(req.params.electionId);
       const election = await storage.getElection(electionId);
-      
+
       if (!election) {
         return res.status(404).json({ message: "Election not found" });
       }
 
       // Check if results can be viewed based on election settings
-      const istTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+      const istTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
       const currentTime = new Date(istTime);
       const currentHour = currentTime.getHours();
       const resultsHour = election.resultsTime ? parseInt(election.resultsTime.split(':')[0]) : 18;
-      
+
       if (currentHour < resultsHour) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: `Election results are only available after ${election.resultsTime || '18:00'}`,
           availableAt: election.resultsTime || '18:00'
         });
@@ -711,18 +882,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Recreate candidates for all constituencies
-      const electionId = 1;
-      
-      // Delete all existing candidates
-      const deletedCandidates = await storage.getCandidatesByElection(electionId);
-      for (const candidate of deletedCandidates) {
-        await storage.deleteCandidate(candidate.id);
+      // Recreate candidates for all elections
+      const allElections = await storage.getAllElections();
+
+      for (const election of allElections) {
+        // Delete all existing candidates for this election
+        const deletedCandidates = await storage.getCandidatesByElection(election.id);
+        for (const candidate of deletedCandidates) {
+          await storage.deleteCandidate(candidate.id);
+        }
       }
-      
+
       const allConstituencies = [
         'Central Delhi', 'East Delhi', 'North Delhi', 'South Delhi', 'West Delhi',
-        'Mumbai North', 'Mumbai South', 'Mumbai Central', 
+        'Mumbai North', 'Mumbai South', 'Mumbai Central',
         'Bangalore North', 'Bangalore South', 'Bangalore Central',
         'Chennai North', 'Chennai South', 'Chennai Central',
         'Coimbatore', 'Madurai', 'Salem', 'Tiruchirapalli', 'Tirunelveli',
@@ -753,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const manifestos = [
         "Economic growth and infrastructure development",
-        "Healthcare reform and education enhancement", 
+        "Healthcare reform and education enhancement",
         "Environmental protection and sustainable development",
         "Social justice and rural development",
         "Anti-corruption and digital governance",
@@ -764,30 +937,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "Urban development and smart city initiatives"
       ];
 
-      // Create 3 candidates per constituency
-      let candidateIndex = 0;
-      for (const constituency of allConstituencies) {
-        for (let i = 0; i < 3; i++) {
-          const party = parties[i % parties.length];
-          const name = candidateNames[candidateIndex % candidateNames.length];
-          const manifesto = manifestos[candidateIndex % manifestos.length];
-          
-          await storage.createCandidate({
-            electionId,
-            name: `${name} (${constituency.split(' ')[0]})`,
-            party: party.name,
-            constituency,
-            symbol: party.symbol,
-            manifesto
-          });
-          
-          candidateIndex++;
+      // Create 3 candidates per constituency for EACH election
+      let totalCreated = 0;
+      for (const election of allElections) {
+        let candidateIndex = 0;
+        for (const constituency of allConstituencies) {
+          for (let i = 0; i < 3; i++) {
+            const party = parties[i % parties.length];
+            const name = candidateNames[candidateIndex % candidateNames.length];
+            const manifesto = manifestos[candidateIndex % manifestos.length];
+
+            await storage.createCandidate({
+              electionId: election.id,
+              name: `${name} (${constituency.split(' ')[0]})`,
+              party: party.name,
+              constituency,
+              symbol: party.symbol,
+              manifesto
+            });
+
+            candidateIndex++;
+            totalCreated++;
+          }
         }
       }
 
-      res.json({ 
-        success: true, 
-        message: `Sample data reset successfully. Created ${allConstituencies.length * 3} candidates across ${allConstituencies.length} constituencies.` 
+      res.json({
+        success: true,
+        message: `Sample data reset successfully. Created ${totalCreated} candidates across ${allElections.length} elections.`
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

@@ -17,6 +17,7 @@ export const citizens = pgTable("citizens", {
   dateOfBirth: text("date_of_birth").notNull(),
   gender: text("gender").notNull(),
   address: text("address").notNull(),
+  state: text("state").notNull().default("Tamil Nadu"),
   district: text("district").notNull(),
   constituency: text("constituency").notNull(),
   pincode: text("pincode").notNull(),
@@ -33,10 +34,14 @@ export const elections = pgTable("elections", {
   description: text("description").notNull(),
   startDate: text("start_date").notNull(),
   endDate: text("end_date").notNull(),
+  electionScope: text("election_scope").notNull().default("State"), // State, Constituency
+  state: text("state").notNull().default("Tamil Nadu"),
+  constituency: text("constituency"),
   status: text("status").notNull().default("upcoming"), // upcoming, active, completed
   votingStartTime: text("voting_start_time").default("08:00"),
   votingEndTime: text("voting_end_time").default("17:00"),
   resultsTime: text("results_time").default("18:00"),
+  blockchainAddress: text("blockchain_address").default("0x1234567890123456789012345678901234567890"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -66,9 +71,29 @@ export const votes = pgTable("votes", {
 export const voterRegistrations = pgTable("voter_registrations", {
   id: serial("id").primaryKey(),
   citizenId: integer("citizen_id").notNull(),
-  voterIdNumber: text("voter_id_number").notNull().unique(),
   registeredAt: text("registered_at").notNull(),
   status: text("status").notNull().default("active"),
+});
+
+export const deathCertificates = pgTable("death_certificates", {
+  id: serial("id").primaryKey(),
+  aadharNumber: text("aadhar_number").notNull(),
+  name: text("name").notNull(),
+  fatherHusbandName: text("father_husband_name").notNull(),
+  motherName: text("mother_name").notNull(),
+  gender: text("gender").notNull(),
+  age: text("age").notNull(),
+  dateOfDeath: text("date_of_death").notNull(),
+  placeOfDeath: text("place_of_death").notNull(),
+  permanentAddress: text("permanent_address").notNull(),
+  addressAtDeath: text("address_at_death").notNull(),
+  registrationNumber: text("registration_number").notNull().unique(),
+  dateOfRegistration: text("date_of_registration").notNull(),
+  dateOfIssue: text("date_of_issue").notNull(),
+  remarks: text("remarks"),
+  zone: text("zone").notNull(),
+  division: text("division").notNull(),
+  createdAt: text("created_at").notNull(),
 });
 
 export const insertAdminSchema = createInsertSchema(admins).omit({
@@ -101,6 +126,10 @@ export const insertElectionSchema = createInsertSchema(elections).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  electionScope: z.enum(["State", "Constituency"]).default("State"),
+  state: z.string().min(1, "State is required"),
+  constituency: z.string().optional(),
 });
 
 export const insertCandidateSchema = createInsertSchema(candidates).omit({
@@ -120,6 +149,13 @@ export const voteSchema = z.object({
 export const voterRegistrationSchema = z.object({
   aadharNumber: z.string().regex(/^\d{4}-\d{4}-\d{4}$/, "Aadhar number must be in XXXX-XXXX-XXXX format"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
+  state: z.string().min(1, "State is required"),
+  constituency: z.string().min(1, "Constituency is required"),
+});
+
+export const insertDeathCertificateSchema = createInsertSchema(deathCertificates).omit({
+  id: true,
+  createdAt: true,
 });
 
 export type Admin = typeof admins.$inferSelect;
@@ -136,3 +172,5 @@ export type Vote = typeof votes.$inferSelect;
 export type VoteData = z.infer<typeof voteSchema>;
 export type VoterRegistration = typeof voterRegistrations.$inferSelect;
 export type VoterRegistrationData = z.infer<typeof voterRegistrationSchema>;
+export type DeathCertificate = typeof deathCertificates.$inferSelect;
+export type InsertDeathCertificate = z.infer<typeof insertDeathCertificateSchema>;

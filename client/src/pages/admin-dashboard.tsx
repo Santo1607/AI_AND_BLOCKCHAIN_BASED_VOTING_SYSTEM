@@ -6,6 +6,8 @@ import { CitizensTable } from "@/components/admin/citizens-table";
 import { CitizenForm } from "@/components/admin/citizen-form";
 import { CandidateManagement } from "@/components/admin/candidate-management";
 import { ElectionManagement } from "@/components/admin/election-management";
+import { DeathCertificateForm } from "@/components/admin/death-certificate-form";
+import { DeathCertificatesList } from "@/components/admin/death-certificates-list";
 import { LanguageSelectorButton } from "@/components/language-selector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +17,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { apiRequest } from "@/lib/queryClient";
 import { Shield, LogOut, FileBarChart, Download, Calendar } from "lucide-react";
 
-type AdminSection = "overview" | "citizens" | "add-citizen" | "candidates" | "elections" | "reports";
+type AdminSection = "overview" | "citizens" | "add-citizen" | "candidates" | "elections" | "reports" | "death-certificate" | "view-certificates";
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -72,7 +74,7 @@ export default function AdminDashboard() {
               <p className="text-gray-600">Monitor and manage citizen registration data</p>
             </div>
             <DashboardStats />
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Card className="card-shadow">
                 <CardHeader>
@@ -82,20 +84,20 @@ export default function AdminDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button 
+                  <Button
                     className="w-full justify-start btn-primary"
                     onClick={() => setCurrentSection("add-citizen")}
                   >
                     Add New Citizen
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     className="w-full justify-start"
                     onClick={() => setCurrentSection("citizens")}
                   >
                     Search Records
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     className="w-full justify-start"
                     onClick={() => setCurrentSection("reports")}
@@ -105,7 +107,7 @@ export default function AdminDashboard() {
                   </Button>
                 </CardContent>
               </Card>
-              
+
               <Card className="card-shadow">
                 <CardHeader>
                   <CardTitle>System Status</CardTitle>
@@ -139,7 +141,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         );
-      
+
       case "citizens":
         return (
           <div className="space-y-8">
@@ -148,7 +150,7 @@ export default function AdminDashboard() {
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Citizen Records</h2>
                 <p className="text-gray-600">View and manage all registered citizens</p>
               </div>
-              <Button 
+              <Button
                 className="btn-primary"
                 onClick={() => setCurrentSection("add-citizen")}
               >
@@ -158,7 +160,7 @@ export default function AdminDashboard() {
             <CitizensTable />
           </div>
         );
-      
+
       case "add-citizen":
         return (
           <div className="space-y-8">
@@ -169,7 +171,7 @@ export default function AdminDashboard() {
             <CitizenForm onSuccess={() => setCurrentSection("citizens")} />
           </div>
         );
-      
+
       case "candidates":
         return (
           <div className="space-y-8">
@@ -180,7 +182,7 @@ export default function AdminDashboard() {
             <CandidateManagement />
           </div>
         );
-      
+
       case "elections":
         return (
           <div className="space-y-8">
@@ -191,7 +193,7 @@ export default function AdminDashboard() {
             <ElectionManagement />
           </div>
         );
-      
+
       case "reports":
         return (
           <div className="space-y-8">
@@ -199,7 +201,7 @@ export default function AdminDashboard() {
               <h2 className="text-3xl font-bold text-gray-900 mb-2">Reports & Analytics</h2>
               <p className="text-gray-600">Generate comprehensive reports and view system analytics</p>
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="card-shadow">
                 <CardContent className="p-6">
@@ -242,7 +244,29 @@ export default function AdminDashboard() {
             </div>
           </div>
         );
-      
+
+      case "death-certificate":
+        return (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Death Certificate</h2>
+              <p className="text-gray-600">Generate death certificates and update citizen records</p>
+            </div>
+            <DeathCertificateForm />
+          </div>
+        );
+
+      case "view-certificates":
+        return (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">View Certificates</h2>
+              <p className="text-gray-600">Search and download issued death certificates</p>
+            </div>
+            <DeathCertificatesList />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -263,7 +287,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-500">Government of India</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <LanguageSelectorButton />
               <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -272,7 +296,7 @@ export default function AdminDashboard() {
                 </div>
                 <span>{t('welcome')}, {admin.name}</span>
               </div>
-              <Button 
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
@@ -287,11 +311,11 @@ export default function AdminDashboard() {
       </header>
 
       <div className="flex">
-        <Sidebar 
-          currentSection={currentSection} 
-          onSectionChange={setCurrentSection} 
+        <Sidebar
+          currentSection={currentSection}
+          onSectionChange={setCurrentSection}
         />
-        
+
         <main className="flex-1 p-8">
           {renderContent()}
         </main>

@@ -1,29 +1,43 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { voterRegistrationSchema, type VoterRegistrationData } from "@shared/schema";
-import { UserCheck, IdCard, Calendar, ArrowLeft, CheckCircle } from "lucide-react";
+import { voterRegistrationSchema, type VoterRegistrationData, Citizen, VoterRegistration } from "@shared/schema";
+import { UserCheck, IdCard, Calendar, ArrowLeft, CheckCircle, Download, Loader2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { VoterAcknowledgementTemplate } from "./voter-acknowledgement-template";
+import { getStates, INDIAN_LOCATIONS } from "@/lib/locations";
 
 interface VoterRegistrationFormProps {
   onBack: () => void;
 }
 
+interface RegistrationResult {
+  citizen: Citizen;
+  registration: VoterRegistration;
+}
+
 export function VoterRegistrationForm({ onBack }: VoterRegistrationFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [registrationResult, setRegistrationResult] = useState<RegistrationResult | null>(null);
+  const templateRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const form = useForm<VoterRegistrationData>({
     resolver: zodResolver(voterRegistrationSchema),
     defaultValues: {
       aadharNumber: "",
-      dateOfBirth: ""
+      dateOfBirth: "",
+      state: "",
+      constituency: ""
     }
   });
 
@@ -39,9 +53,12 @@ export function VoterRegistrationForm({ onBack }: VoterRegistrationFormProps) {
     try {
       const response = await apiRequest("POST", "/api/voter/register", data);
       const result = await response.json();
-      
+
       if (result.success) {
-        setRegistrationSuccess(result.voterIdNumber);
+        setRegistrationResult({
+          citizen: result.citizen,
+          registration: result.registration
+        });
         toast({
           title: "Registration Successful",
           description: "You are now registered to vote in elections.",
@@ -61,7 +78,52 @@ export function VoterRegistrationForm({ onBack }: VoterRegistrationFormProps) {
     }
   };
 
-  if (registrationSuccess) {
+  const downloadAcknowledgement = async () => {
+    if (!templateRef.current || !registrationResult) return;
+
+    setIsDownloading(true);
+    try {
+      const element = templateRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        windowWidth: 794,
+        windowHeight: 1123,
+        width: 794,
+        height: 1123,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Voter_Acknowledgement_${registrationResult.citizen.aadharNumber}.pdf`);
+
+      toast({
+        title: "Success",
+        description: "Acknowledgement form downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not generate the acknowledgement PDF.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  if (registrationResult) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow-sm border-b border-gray-200">
@@ -85,54 +147,88 @@ export function VoterRegistrationForm({ onBack }: VoterRegistrationFormProps) {
         </header>
 
         <div className="max-w-2xl mx-auto px-4 py-12">
-          <Card className="shadow-xl border-0">
-            <CardHeader className="text-center pb-8">
+          <Card className="shadow-xl border-0 overflow-hidden">
+            <div className="bg-green-600 h-2 w-full" />
+            <CardHeader className="text-center pb-8 pt-10">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-10 h-10 text-green-600" />
               </div>
               <CardTitle className="text-3xl font-bold text-gray-900">Registration Successful!</CardTitle>
-              <p className="text-gray-600 mt-4">You are now registered to vote in all future elections</p>
+              <p className="text-gray-600 mt-4">
+                Thank you for registering, <strong>{registrationResult.citizen.name}</strong>.
+                Your Aadhar Number is now your unique Voter ID.
+              </p>
             </CardHeader>
 
-            <CardContent className="text-center">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                <h3 className="text-lg font-semibold text-green-900 mb-2">Your Voter ID Number</h3>
-                <p className="text-2xl font-mono font-bold text-green-600">{registrationSuccess}</p>
-                <p className="text-sm text-green-700 mt-2">Please save this number for future reference</p>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center justify-center space-x-2 text-green-600">
-                  <CheckCircle className="w-5 h-5" />
-                  <span>Aadhar verification completed</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2 text-green-600">
-                  <CheckCircle className="w-5 h-5" />
-                  <span>Voter registration activated</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2 text-green-600">
-                  <CheckCircle className="w-5 h-5" />
-                  <span>Eligible for all future elections</span>
+            <CardContent className="px-10 pb-12">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-8 mb-8 text-center">
+                <h3 className="text-sm uppercase tracking-widest font-bold text-green-800 mb-2">Registered Aadhar ID</h3>
+                <p className="text-4xl font-mono font-black text-green-600 tracking-tighter">
+                  {registrationResult.citizen.aadharNumber}
+                </p>
+                <div className="mt-4 pt-4 border-t border-green-200 text-sm text-green-700 font-medium">
+                  Assigned Constituency: <span className="text-green-900 font-bold">{registrationResult.citizen.constituency}</span>
                 </div>
               </div>
 
-              <div className="flex space-x-4">
-                <Button 
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  onClick={onBack}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                  <span className="text-sm font-medium">Aadhar Verified</span>
+                </div>
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                  <span className="text-sm font-medium">Biometrics Matched</span>
+                </div>
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                  <span className="text-sm font-medium">Address Validated</span>
+                </div>
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                  <span className="text-sm font-medium">Electoral Active</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  className="flex-1 h-14 bg-green-600 hover:bg-green-700 text-lg shadow-lg hover:shadow-green-200 transition-all font-bold"
+                  onClick={downloadAcknowledgement}
+                  disabled={isDownloading}
                 >
-                  Continue to Voting
+                  {isDownloading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Generating PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5 mr-2" />
+                      Download Official Acknowledgement
+                    </>
+                  )}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={onBack}
+                <Button
+                  variant="outline"
+                  className="h-14 px-8 text-gray-600 hover:bg-gray-50 font-semibold"
+                  onClick={() => window.location.href = '/voting'}
                 >
-                  Back to Portal
+                  Go to Voting Portal
                 </Button>
               </div>
             </CardContent>
           </Card>
+
+          <p className="text-center text-gray-500 mt-8 text-sm italic">
+            This acknowledgement serves as your official permission to vote until your physical Voter card is delivered.
+          </p>
+        </div>
+
+        {/* Hidden Template for PDF Capture */}
+        <div className="absolute opacity-0 pointer-events-none" style={{ left: '-9999px', top: '0' }}>
+          <div ref={templateRef} style={{ width: '794px', height: '1123px' }}>
+            <VoterAcknowledgementTemplate data={registrationResult} />
+          </div>
         </div>
       </div>
     );
@@ -236,26 +332,87 @@ export function VoterRegistrationForm({ onBack }: VoterRegistrationFormProps) {
                   )}
                 />
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-medium text-gray-900">State</FormLabel>
+                        <Select onValueChange={(val) => {
+                          field.onChange(val);
+                          form.setValue("constituency", ""); // Reset constituency when state changes
+                        }} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-14 px-4 text-lg">
+                              <SelectValue placeholder="Select State" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {getStates().map((state) => (
+                              <SelectItem key={state} value={state}>
+                                {state}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="constituency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-medium text-gray-900">Constituency</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!form.watch("state")}>
+                          <FormControl>
+                            <SelectTrigger className="h-14 px-4 text-lg">
+                              <SelectValue placeholder="Select Constituency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {(INDIAN_LOCATIONS[form.watch("state")] || []).map((c) => (
+                              <SelectItem key={c} value={c}>
+                                {c}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-sm text-gray-500">
+                          Select your registered constituency
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-start space-x-3">
                     <UserCheck className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
                     <div>
                       <h4 className="font-medium text-blue-900 mb-1">Verification Process</h4>
                       <p className="text-sm text-blue-800">
-                        Your details will be verified against the Aadhar database. Only verified citizens 
+                        Your details will be verified against the Aadhar database. Only verified citizens
                         can register to vote. This ensures election integrity and prevents fraud.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full py-4 px-6 text-lg font-semibold bg-green-600 hover:bg-green-700"
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <>Verifying & Registering...</>
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Verifying & Registering...
+                    </>
                   ) : (
                     <>
                       <UserCheck className="w-5 h-5 mr-2" />

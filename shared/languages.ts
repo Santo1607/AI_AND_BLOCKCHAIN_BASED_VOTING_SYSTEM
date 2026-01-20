@@ -54,17 +54,17 @@ export const translations = {
     'male': 'Male',
     'female': 'Female',
     'other': 'Other',
-    
+
     // Navigation
     'adminPortal': 'Admin Portal',
-    'publicPortal': 'Public Portal',
+    'publicPortal': 'Voter Registration',
     'votingPortal': 'Voting Portal',
     'dashboard': 'Dashboard',
     'citizens': 'Citizens',
     'elections': 'Elections',
     'candidates': 'Candidates',
     'reports': 'Reports',
-    
+
     // Voting Portal
     'digitalVotingSystem': 'Digital Voting System',
     'votingPlatformDescription': 'Secure, transparent, and accessible voting platform powered by Aadhar verification. Exercise your democratic right with confidence and convenience.',
@@ -87,7 +87,7 @@ export const translations = {
     'currentElectionTitle': 'General Election 2024 - NOW ACTIVE',
     'currentElectionDescription': 'National Parliamentary Election is currently open for voting. Make your voice heard in shaping the future of our nation.',
     'viewLiveResults': 'View Live Results',
-    
+
     // Admin Portal
     'adminLogin': 'Admin Login',
     'username': 'Username',
@@ -101,7 +101,7 @@ export const translations = {
     'active': 'Active',
     'inactive': 'Inactive',
     'actions': 'Actions',
-    
+
     // Public Portal
     'aadharVerification': 'Aadhar Verification',
     'verifyAadhar': 'Verify Aadhar',
@@ -111,7 +111,7 @@ export const translations = {
     'verificationSuccessful': 'Verification Successful',
     'verificationFailed': 'Verification Failed',
     'ageRequirement': 'You must be 18 years or older to register',
-    
+
     // Voting Process
     'voteNow': 'Vote Now',
     'registerToVote': 'Register to Vote',
@@ -122,13 +122,13 @@ export const translations = {
     'voteSubmitted': 'Vote Submitted Successfully',
     'alreadyVoted': 'You have already voted in this election',
     'votingClosed': 'Voting is currently closed',
-    
+
     // Age Verification
     'ageVerificationRequired': 'Age Verification Required',
     'mustBe18': 'You must be 18 years or older to proceed',
     'ageVerified': 'Age verified successfully',
     'underAge': 'Sorry, you are under 18 years old and cannot proceed',
-    
+
     // Elections
     'electionName': 'Election Name',
     'electionDate': 'Election Date',
@@ -138,7 +138,7 @@ export const translations = {
     'upcoming': 'Upcoming',
     'ongoing': 'Ongoing',
     'completed': 'Completed',
-    
+
     // Voting completion translations
     'voteCastSuccessfully': 'Vote Cast Successfully!',
     'thankYouParticipating': 'Thank you for participating in the democratic process',
@@ -152,18 +152,18 @@ export const translations = {
     'votingComplete': 'Voting Complete',
     'votingCompleteMessage': 'Your vote has been cast and cannot be changed. The voting process is complete and secure. Results will be available to election officials at 6:00 PM.',
     'returnToPortal': 'Return to Portal',
-    
+
     // Results
     'electionResults': 'Election Results',
     'totalVotes': 'Total Votes',
     'winner': 'Winner',
     'votePercentage': 'Vote Percentage',
-    
+
     // Language Selection
     'selectLanguage': 'Select Language',
     'languageChanged': 'Language changed successfully'
   },
-  
+
   hi: {
     // Common
     'welcome': 'स्वागत',
@@ -189,17 +189,17 @@ export const translations = {
     'male': 'पुरुष',
     'female': 'महिला',
     'other': 'अन्य',
-    
+
     // Navigation
     'adminPortal': 'प्रशासक पोर्टल',
-    'publicPortal': 'सार्वजनिक पोर्टल',
+    'publicPortal': 'मतदाता पंजीकरण',
     'votingPortal': 'मतदान पोर्टल',
     'dashboard': 'डैशबोर्ड',
     'citizens': 'नागरिक',
     'elections': 'चुनाव',
     'candidates': 'उम्मीदवार',
     'reports': 'रिपोर्ट',
-    
+
     // Voting Portal
     'digitalVotingSystem': 'डिजिटल मतदान प्रणाली',
     'votingPlatformDescription': 'आधार सत्यापन द्वारा संचालित सुरक्षित, पारदर्शी और सुलभ मतदान मंच। आत्मविश्वास और सुविधा के साथ अपने लोकतांत्रिक अधिकार का प्रयोग करें।',
@@ -222,7 +222,7 @@ export const translations = {
     'currentElectionTitle': 'आम चुनाव 2024 - अब सक्रिय',
     'currentElectionDescription': 'राष्ट्रीय संसदीय चुनाव वर्तमान में मतदान के लिए खुला है। हमारे राष्ट्र का भविष्य आकार देने में अपनी आवाज सुनाएं।',
     'viewLiveResults': 'लाइव परिणाम देखें',
-    
+
     // Admin Portal
     'adminLogin': 'प्रशासक लॉगिन',
     'username': 'उपयोगकर्ता नाम',
@@ -236,7 +236,7 @@ export const translations = {
     'active': 'सक्रिय',
     'inactive': 'निष्क्रिय',
     'actions': 'कार्य',
-    
+
     // Public Portal
     'aadharVerification': 'आधार सत्यापन',
     'verifyAadhar': 'आधार सत्यापित करें',
@@ -246,7 +246,7 @@ export const translations = {
     'verificationSuccessful': 'सत्यापन सफल',
     'verificationFailed': 'सत्यापन असफल',
     'ageRequirement': 'पंजीकरण के लिए आपकी आयु 18 वर्ष या अधिक होनी चाहिए',
-    
+
     // Voting Portal
     'voteNow': 'अभी वोट करें',
     'registerToVote': 'वोट के लिए पंजीकरण करें',
@@ -260,13 +260,13 @@ export const translations = {
     'voteSubmitted': 'वोट सफलतापूर्वक जमा किया गया',
     'alreadyVoted': 'आपने इस चुनाव में पहले से ही वोट दिया है',
     'votingClosed': 'वोटिंग वर्तमान में बंद है',
-    
+
     // Age Verification
     'ageVerificationRequired': 'आयु सत्यापन आवश्यक',
     'mustBe18': 'आगे बढ़ने के लिए आपकी आयु 18 वर्ष या अधिक होनी चाहिए',
     'ageVerified': 'आयु सफलतापूर्वक सत्यापित',
     'underAge': 'खुशी, आप 18 वर्ष से कम आयु के हैं और आगे नहीं बढ़ सकते',
-    
+
     // Elections
     'electionName': 'चुनाव का नाम',
     'electionDate': 'चुनाव तिथि',
@@ -276,18 +276,18 @@ export const translations = {
     'upcoming': 'आगामी',
     'ongoing': 'चालू',
     'completed': 'पूर्ण',
-    
+
     // Results
     'electionResults': 'चुनाव परिणाम',
     'totalVotes': 'कुल वोट',
     'winner': 'विजेता',
     'votePercentage': 'वोट प्रतिशत',
-    
+
     // Language Selection
     'selectLanguage': 'भाषा चुनें',
     'languageChanged': 'भाषा सफलतापूर्वक बदली गई'
   },
-  
+
   // Bengali translations
   bn: {
     'welcome': 'স্বাগতম',
@@ -317,10 +317,10 @@ export const translations = {
     'registerToVote': 'ভোট দেওয়ার জন্য নিবন্ধন করুন',
     'viewLiveResults': 'লাইভ ফলাফল দেখুন',
     'votingClosed': 'ভোটিং বর্তমানে বন্ধ',
-    'publicPortal': 'পাবলিক পোর্টাল',
+    'publicPortal': 'ভোটার নিবন্ধন',
     'adminPortal': 'অ্যাডমিন পোর্টাল'
   },
-  
+
   // Additional languages following same pattern for Telugu, Tamil, etc.
   te: {
     'welcome': 'స్వాగతం',
@@ -350,7 +350,7 @@ export const translations = {
     'registerToVote': 'ఓటు వేయడానికి నమోదు చేసుకోండి',
     'viewLiveResults': 'లైవ్ ఫలితాలను చూడండి',
     'votingClosed': 'ఓటింగ్ ప్రస్తుతం మూసివేయబడింది',
-    'publicPortal': 'పబ్లిక్ పోర్టల్',
+    'publicPortal': 'ఓటరు నమోదు',
     'adminPortal': 'అడ్మిన్ పోర్టల్'
   },
 
@@ -383,9 +383,9 @@ export const translations = {
     'registerToVote': 'வாக்களிக்க பதிவு செய்யுங்கள்',
     'viewLiveResults': 'நேரடி முடிவுகளைப் பார்க்கவும்',
     'votingClosed': 'வாக்களிப்பு தற்போது மூடப்பட்டுள்ளது',
-    'publicPortal': 'பொது இணையதளம்',
+    'publicPortal': 'வாக்காளர் பதிவு',
     'adminPortal': 'நிர்வாக இணையதளம்',
-    
+
     // Voting completion translations in Tamil
     'voteCastSuccessfully': 'வாக்கு வெற்றிகரமாக பதிவு செய்யப்பட்டது!',
     'thankYouParticipating': 'ஜனநாயக செயல்முறையில் பங்கேற்றதற்கு நன்றி',
@@ -405,8 +405,8 @@ export const translations = {
 export type TranslationKey = keyof typeof translations.en;
 
 export function getTranslation(key: TranslationKey, language: string = 'en'): string {
-  const lang = translations[language as keyof typeof translations] || translations.en;
-  return lang[key] || translations.en[key] || key;
+  const lang = (translations as any)[language] || translations.en;
+  return lang[key] || (translations.en as any)[key] || key;
 }
 
 export function calculateAge(dateOfBirth: string): number {
@@ -414,11 +414,11 @@ export function calculateAge(dateOfBirth: string): number {
   const birthDate = new Date(dateOfBirth);
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-  
+
   return age;
 }
 

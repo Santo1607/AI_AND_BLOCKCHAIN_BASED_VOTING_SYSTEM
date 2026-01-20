@@ -25,13 +25,19 @@ export class VotingBlockchain {
   private initializeProvider() {
     try {
       // Use local blockchain simulation for development
-      // This simulates blockchain properties without requiring external services
       console.log('Initializing blockchain simulation for vote integrity');
-      
-      // Don't attempt to connect to external providers in development
-      // All blockchain operations will use local simulation
     } catch (error) {
       console.warn('Blockchain initialization failed:', error);
+    }
+  }
+
+  // Set the contract address for the current operation
+  setContractAddress(address: string) {
+    if (this.provider && address && address !== CONTRACT_ADDRESS) {
+      this.contract = new ethers.Contract(address, VOTE_CONTRACT_ABI, this.provider);
+      if (this.signer) {
+        this.contract = this.contract.connect(this.signer);
+      }
     }
   }
 
@@ -83,10 +89,10 @@ export class VotingBlockchain {
       } else {
         // Simulate blockchain storage for development
         const localVotes = this.getLocalVotes();
-        
+
         // Don't check for duplicates here - let the database handle vote validation
         // This allows the server to properly manage vote tracking
-        
+
         // Store vote locally with blockchain-like properties
         localVotes[voterHash] = {
           candidateId,
@@ -94,7 +100,7 @@ export class VotingBlockchain {
           timestamp,
           blockNumber: Object.keys(localVotes).length + 1
         };
-        
+
         this.setLocalVotes(localVotes);
 
         return {
@@ -135,7 +141,7 @@ export class VotingBlockchain {
         // Check local simulation
         const localVotes = this.getLocalVotes();
         const vote = localVotes[voterHash];
-        
+
         if (vote) {
           return {
             verified: true,
