@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BiometricService } from '@/lib/biometric-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { CameraCapture } from '@/components/ui/camera-capture';
 import { Fingerprint, Camera, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-// NOTE: face-api.js removed for instant performance (Mock Mode)
+import * as faceapi from 'face-api.js';
 
 interface BiometricVerificationProps {
   storedPhotoUrl?: string; // Should be the URL to the Aadhar photo
@@ -35,30 +35,121 @@ export function EnhancedBiometricVerification({
     confidence: 0
   });
   const [error, setError] = useState<string | null>(null);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const storedFaceDescriptorRef = useRef<Float32Array | null>(null);
 
-  // Instant Mock Load
+  // Load models on mount
   useEffect(() => {
-    // Simulate a tiny delay for realism, then unlock face step
-    const timer = setTimeout(() => {
-      setCurrentStep('face');
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    const loadModels = async () => {
+      try {
+        // Use public CDN for models to ensure all shards are available and correct
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        console.log("Loading FaceAPI models from CDN...");
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        console.log("FaceAPI models loaded");
+        setModelsLoaded(true);
+
+        // Pre-fetch/process the stored photo if available
+        if (storedPhotoUrl) {
+          processStoredPhoto(storedPhotoUrl);
+        } else {
+          // If no photo to compare against, we can't really verify face. 
+          // For now, we might error out or just allow proceed if this is a lenient flow (but it says verification required).
+          setError("No stored photo found for this citizen. Cannot perform face verification.");
+        }
+
+      } catch (err: any) {
+        console.error("Failed to load models:", err);
+        setError(`Failed to load biometric models: ${err.message || err}`);
+      }
+    };
+    loadModels();
+  }, [storedPhotoUrl]);
+
+  // Process the stored photo to get its descriptor
+  const processStoredPhoto = async (url: string) => {
+    try {
+      console.log("Processing stored photo...", url);
+      // Fetch image and create HTMLImageElement
+      const img = await faceapi.fetchImage(url);
+
+      // Detect single face
+      const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks(true)
+        .withFaceDescriptor();
+
+      if (detection) {
+        console.log("Face detected in stored photo");
+        storedFaceDescriptorRef.current = detection.descriptor;
+        setCurrentStep('face');
+      } else {
+        console.warn("No face detected in stored photo");
+        setError("Could not detect a face in your registered database photo. Please contact support.");
+      }
+    } catch (err) {
+      console.error("Error processing stored photo:", err);
+      // Fallback: If CORS or other issue prevents easy loading, we might need a proxy or base64. 
+      // Assuming for this prototype that the URL is accessible (e.g. from same domain /uploads)
+      setError("Failed to access stored photo for verification.");
+    }
+  };
 
   const handleFaceCapture = useCallback(async (imageData: string) => {
-    // INSTANT MOCK VERIFICATION
+    if (!modelsLoaded || !storedFaceDescriptorRef.current) {
+      setError("System not ready or reference photo missing.");
+      return;
+    }
+
     setIsProcessing(true);
     setError(null);
 
-    // 1.5 second "verification" timer to match phone unlock feel
-    setTimeout(() => {
-      console.log("Mock verification successful: Instant");
-      setFaceVerified(true);
-      setVerificationResults(prev => ({ ...prev, faceMatch: true, confidence: 99.8 }));
-      setCurrentStep('fingerprint');
+    try {
+      // Create an image element from the base64 capture
+      const img = await faceapi.fetchImage(imageData);
+
+      // Detect face in captured image
+      const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks(true)
+        .withFaceDescriptor();
+
+      if (!detection) {
+        setError("No face detected in camera feed. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Compare descriptors
+      const distance = faceapi.euclideanDistance(storedFaceDescriptorRef.current, detection.descriptor);
+      console.log("Face Match Distance:", distance);
+
+      // Threshold: Lower is better. 0.6 is standard for 128D, strictly maybe 0.5
+      // For TinyFace, sometimes loose thresholds are needed, ensuring 0.6 is safe.
+      const threshold = 0.6;
+
+      if (distance < threshold) {
+        // MATCH
+        const confidence = Math.max(0, (1 - distance) * 100);
+        console.log(`Match found! Confidence: ${confidence.toFixed(2)}%`);
+
+        setFaceVerified(true);
+        setVerificationResults(prev => ({ ...prev, faceMatch: true, confidence }));
+        setCurrentStep('fingerprint');
+      } else {
+        // NO MATCH
+        setError("Face does not match our records. Please try again.");
+      }
+
+    } catch (err) {
+      console.error("Verification error:", err);
+      setError("An error occurred during verification processing.");
+    } finally {
       setIsProcessing(false);
-    }, 1500);
-  }, []);
+    }
+  }, [modelsLoaded]);
 
 
   const handleFingerprintScan = useCallback(async () => {
@@ -109,7 +200,7 @@ export function EnhancedBiometricVerification({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5" />
-            Bio-Secure Verification (Fast)
+            Biometric Verification
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -146,7 +237,8 @@ export function EnhancedBiometricVerification({
           {currentStep === 'loading' && (
             <div className="text-center py-12">
               <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600 mb-4" />
-              <p className="text-gray-600">Initializing Verification...</p>
+              <p className="text-gray-600">Initializing Biometric Models...</p>
+              <p className="text-xs text-gray-400 mt-2">This may take a moment</p>
             </div>
           )}
 
@@ -154,7 +246,7 @@ export function EnhancedBiometricVerification({
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-center">Step 1: Facial Verification</h3>
               <p className="text-center text-gray-600">
-                Look directly at the camera. Verification is performed against your Aadhar photo.
+                Look directly at the camera.
               </p>
 
               <CameraCapture
