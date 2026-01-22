@@ -126,9 +126,9 @@ export function EnhancedBiometricVerification({
       const distance = faceapi.euclideanDistance(storedFaceDescriptorRef.current, detection.descriptor);
       console.log("Face Match Distance:", distance);
 
-      // Threshold: Lower is better. 0.6 is standard for 128D, strictly maybe 0.5
-      // For TinyFace, sometimes loose thresholds are needed, ensuring 0.6 is safe.
-      const threshold = 0.6;
+      // Threshold: Lower is better. 0.6 is standard for 128D.
+      // 0.4 provides better security against false positives while maintaining usability.
+      const threshold = 0.4;
 
       if (distance < threshold) {
         // MATCH
