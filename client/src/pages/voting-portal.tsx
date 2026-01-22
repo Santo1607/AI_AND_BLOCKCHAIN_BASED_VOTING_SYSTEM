@@ -34,16 +34,24 @@ export default function VotingPortal() {
 
   const { data: elections } = useQuery<Election[]>({
     queryKey: ['/api/elections'],
-    queryFn: () => apiRequest("GET", "/api/elections").then(res => res.json())
+    queryFn: () => apiRequest("GET", "/api/elections").then(res => res.json()),
+    refetchInterval: 60000,
+    staleTime: 0
   });
 
   const activeElections = elections?.filter(e => e.status === "active") || [];
 
   useEffect(() => {
     const updateTime = () => {
-      // Use Indian Standard Time (IST)
-      const istTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-      const now = new Date(istTime);
+      // Robust Indian Standard Time (IST) calculation
+      const nowRaw = new Date();
+      // IST is UTC + 5:30
+      // getTimezoneOffset() returns minutes to add to local to get UTC. e.g. -330 for IST.
+      // So we get UTC time in ms, then add 5.5 hours.
+      const utcTime = nowRaw.getTime() + (nowRaw.getTimezoneOffset() * 60000);
+      const istOffset = 5.5 * 60 * 60000;
+      const now = new Date(utcTime + istOffset);
+
       setCurrentTime(now);
 
       const currentHour = now.getHours();
@@ -53,10 +61,17 @@ export default function VotingPortal() {
       const isAnyVotingActive = activeElections.some((election: Election) => {
         const votingStartTime = election.votingStartTime || "08:00";
         const votingEndTime = election.votingEndTime || "17:00";
+
+        // Handle "00:00" as end time meaning midnight/end of day if intended, 
+        // but robust parsing:
         const [startH, startM] = votingStartTime.split(':').map(Number);
         const [endH, endM] = votingEndTime.split(':').map(Number);
+
         const startTimeInM = startH * 60 + startM;
         const endTimeInM = endH * 60 + endM;
+
+        // If end time is before start time, assume it spans to next day (not typical for this app but good safety)
+        // For this app, we simply check range.
         return currentTimeInMinutes >= startTimeInM && currentTimeInMinutes < endTimeInM;
       });
 
@@ -164,8 +179,12 @@ export default function VotingPortal() {
         {/* Voting Schedule & Status */}
         <div className="space-y-4 mb-8">
           {activeElections.map((election: Election) => {
-            const now = new Date();
-            const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            // Robust Date Parsing for Display Logic
+            const nowRaw = new Date();
+            const utcTime = nowRaw.getTime() + (nowRaw.getTimezoneOffset() * 60000);
+            const istOffset = 5.5 * 60 * 60000;
+            const istTime = new Date(utcTime + istOffset);
+
             const currentHour = istTime.getHours();
             const currentMin = istTime.getMinutes();
             const currentTimeInM = currentHour * 60 + currentMin;

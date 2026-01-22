@@ -332,63 +332,7 @@ export function VoterRegistrationForm({ onBack }: VoterRegistrationFormProps) {
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-medium text-gray-900">State</FormLabel>
-                        <Select onValueChange={(val) => {
-                          field.onChange(val);
-                          form.setValue("constituency", ""); // Reset constituency when state changes
-                        }} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="h-14 px-4 text-lg">
-                              <SelectValue placeholder="Select State" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {getStates().map((state) => (
-                              <SelectItem key={state} value={state}>
-                                {state}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
-                  <FormField
-                    control={form.control}
-                    name="constituency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-medium text-gray-900">Constituency</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!form.watch("state")}>
-                          <FormControl>
-                            <SelectTrigger className="h-14 px-4 text-lg">
-                              <SelectValue placeholder="Select Constituency" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(INDIAN_LOCATIONS[form.watch("state")] || []).map((c) => (
-                              <SelectItem key={c} value={c}>
-                                {c}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-sm text-gray-500">
-                          Select your registered constituency
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-start space-x-3">

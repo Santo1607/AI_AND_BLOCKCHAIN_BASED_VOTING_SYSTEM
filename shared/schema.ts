@@ -149,8 +149,8 @@ export const voteSchema = z.object({
 export const voterRegistrationSchema = z.object({
   aadharNumber: z.string().regex(/^\d{4}-\d{4}-\d{4}$/, "Aadhar number must be in XXXX-XXXX-XXXX format"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  state: z.string().min(1, "State is required"),
-  constituency: z.string().min(1, "Constituency is required"),
+  state: z.string().optional(),
+  constituency: z.string().optional(),
 });
 
 export const insertDeathCertificateSchema = createInsertSchema(deathCertificates).omit({

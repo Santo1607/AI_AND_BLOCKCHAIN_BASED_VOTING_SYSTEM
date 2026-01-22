@@ -12,6 +12,14 @@ import { Calendar, Clock, Settings, TrendingUp, Users, Vote, BarChart3, PieChart
 import type { Election } from "@shared/schema";
 import { getStates, INDIAN_LOCATIONS } from "@/lib/locations";
 
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(':');
+  const h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const formattedHour = h % 12 || 12;
+  return `${formattedHour}:${minutes} ${ampm}`;
+};
+
 // Use dynamic constituencies from locations.ts instead of hardcoded list
 const constituencies = Object.values(INDIAN_LOCATIONS).flat().sort();
 
@@ -444,8 +452,8 @@ export function ElectionManagement() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Election Schedule</h3>
               <div className="text-sm text-gray-600 space-y-1">
-                <p>Voting: 8:00 AM - 5:00 PM</p>
-                <p>Results: 6:00 PM onwards</p>
+                <p>Voting: {currentElection ? `${formatTime(currentElection.votingStartTime || "08:00")} - ${formatTime(currentElection.votingEndTime || "17:00")}` : 'Select an election'}</p>
+                <p>Results: {currentElection ? `${formatTime(currentElection.resultsTime || "18:00")} onwards` : 'Select an election'}</p>
               </div>
               <div className="mt-2">
                 <Badge
@@ -729,9 +737,9 @@ export function ElectionManagement() {
               <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Results Not Yet Available</h3>
               <p className="text-gray-600">
-                {timeStatus.status === 'pending' && 'Voting has not started yet. Results will be available after 6:00 PM.'}
-                {timeStatus.status === 'active' && 'Voting is currently in progress. Results will be available after 6:00 PM.'}
-                {timeStatus.status === 'ended' && 'Voting has ended. Results will be available starting at 6:00 PM.'}
+                {timeStatus.status === 'pending' && `Voting has not started yet. Results will be available after ${formatTime(currentElection?.resultsTime || "18:00")}.`}
+                {timeStatus.status === 'active' && `Voting is currently in progress. Results will be available after ${formatTime(currentElection?.resultsTime || "18:00")}.`}
+                {timeStatus.status === 'ended' && `Voting has ended. Results will be available starting at ${formatTime(currentElection?.resultsTime || "18:00")}.`}
               </p>
             </div>
           )}
